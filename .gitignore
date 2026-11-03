@@ -1,0 +1,41 @@
+# ===== 敏感信息（严禁上传）=====
+api_key.txt
+*.key
+.env
+
+# ===== LaTeX 编译中间产物 =====
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.thm
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.xdv
+
+# ===== 编辑器与工具配置 =====
+.claude/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ===== 非论文构建所需的本地资料 =====
+hithesis-master/
+安全对齐/
+数据管线参考文章/
+数据质量筛选/
+风格对齐/
+中期报告.pdf
+图表与实验数据汇总.md
+论文初稿_backup_*.tex
