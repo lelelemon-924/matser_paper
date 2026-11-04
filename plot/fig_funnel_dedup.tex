@@ -1,0 +1,354 @@
+\documentclass[11pt,tikz,border=10pt]{standalone}
+\usepackage{ctex}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+% 清透科技色系
+\definecolor{tcyan}{RGB}{88,140,150}
+\definecolor{tblue}{RGB}{65,125,170}
+\definecolor{tgreen}{RGB}{80,148,130}
+\definecolor{tdark}{RGB}{57,65,72}
+\definecolor{tlight}{RGB}{247,249,250}
+
+\begin{document}
+
+\begin{tikzpicture}[
+    font=\sffamily,
+    >={{Latex[length=2.2mm,width=1.5mm]}},
+    layertext/.style={
+        align=center,
+        text width=8.2cm,
+        inner sep=0pt
+    },
+    badge/.style={
+        rounded corners=2pt,
+        minimum width=1.65cm,
+        minimum height=0.56cm,
+        align=center,
+        font=\fontsize{8pt}{9pt}\selectfont\bfseries
+    },
+    stat/.style={
+        rounded corners=3pt,
+        draw=black!16,
+        fill=white,
+        minimum width=2.0cm,
+        minimum height=0.60cm,
+        align=center,
+        font=\fontsize{8pt}{10pt}\selectfont\bfseries,
+        inner sep=3pt
+    }
+]
+
+% ==================================================
+% 漏斗尺寸参数，单位均为 cm
+% ==================================================
+
+\pgfmathsetmacro{\topW}{13.0}
+\pgfmathsetmacro{\wA}{11.3}
+\pgfmathsetmacro{\wB}{9.7}
+\pgfmathsetmacro{\wC}{8.2}
+\pgfmathsetmacro{\botW}{6.9}
+
+% 增加层高，避免文字相互遮挡
+\pgfmathsetmacro{\h}{1.85}
+
+\pgfmathsetmacro{\yT}{0}
+\pgfmathsetmacro{\yA}{-\h}
+\pgfmathsetmacro{\yB}{-2*\h}
+\pgfmathsetmacro{\yC}{-3*\h}
+\pgfmathsetmacro{\yD}{-4*\h}
+
+% ==================================================
+% 背景
+% ==================================================
+
+\fill[
+    white,
+    rounded corners=8pt
+]
+(-8.35,1.85) rectangle (9.15,-10.15);
+
+% ==================================================
+% 标题
+% ==================================================
+
+\node[
+    font=\fontsize{12pt}{14pt}\selectfont\bfseries,
+    text=tdark
+]
+at (0,1.28)
+{三级递进式去重管道};
+
+\node[
+    font=\fontsize{8pt}{10pt}\selectfont,
+    text=black!48
+]
+at (0,0.88)
+{Funnel Deduplication};
+
+% ==================================================
+% 漏斗主体
+% ==================================================
+
+% 原始语料层
+\path[
+    fill=white,
+    draw=black!45,
+    line width=.7pt
+]
+(-\topW/2,\yT)
+--
+(\topW/2,\yT)
+--
+(\wA/2,\yA)
+--
+(-\wA/2,\yA)
+-- cycle;
+
+% SimHash 层
+\path[
+    fill=tblue!9,
+    draw=tblue!55!black,
+    line width=.75pt
+]
+(-\wA/2,\yA)
+--
+(\wA/2,\yA)
+--
+(\wB/2,\yB)
+--
+(-\wB/2,\yB)
+-- cycle;
+
+% MinHash 层
+\path[
+    fill=tcyan!10,
+    draw=tcyan!55!black,
+    line width=.75pt
+]
+(-\wB/2,\yB)
+--
+(\wB/2,\yB)
+--
+(\wC/2,\yC)
+--
+(-\wC/2,\yC)
+-- cycle;
+
+% BGE-M3 层
+\path[
+    fill=tgreen!10,
+    draw=tgreen!55!black,
+    line width=.75pt
+]
+(-\wC/2,\yC)
+--
+(\wC/2,\yC)
+--
+(\botW/2,\yD)
+--
+(-\botW/2,\yD)
+-- cycle;
+
+% ==================================================
+% 各层文字
+% ==================================================
+
+\node[layertext]
+at (0,{(\yT+\yA)/2})
+{
+    {\fontsize{11pt}{13pt}\selectfont
+     \bfseries 原始 CPT 语料库}
+    \\[4pt]
+    {\fontsize{8pt}{10pt}\selectfont
+     \color{tdark}
+     七类电力数据 · 文本抽取 · 格式规范 ·
+     噪声清洗 · 分段切片}
+};
+
+\node[layertext]
+at (0,{(\yA+\yB)/2})
+{
+    {\fontsize{10.5pt}{12pt}\selectfont
+     \bfseries 一级去重：SimHash + 规则匹配}
+    \\[4pt]
+    {\fontsize{7.8pt}{9.5pt}\selectfont
+     \color{tdark}
+     $B=64$，汉明距离 $d_H=0$ 精确匹配，
+     $O(|D|)$ 快速剔除}
+};
+
+\node[layertext]
+at (0,{(\yB+\yC)/2})
+{
+    {\fontsize{10.5pt}{12pt}\selectfont
+     \bfseries 二级去重：MinHash + LSH}
+    \\[4pt]
+    {\fontsize{7.8pt}{9.5pt}\selectfont
+     \color{tdark}
+     $K=128,\ n=3,\ \tau_J=0.85$，
+     LSH 桶分组加速}
+};
+
+\node[layertext]
+at (0,{(\yC+\yD)/2})
+{
+    {\fontsize{10.5pt}{12pt}\selectfont
+     \bfseries 三级去重：BGE-M3 语义嵌入}
+    \\[4pt]
+    {\fontsize{7.8pt}{9.5pt}\selectfont
+     \color{tdark}
+     $D=3584,\ \tau_{\cos}=0.92$，
+     保留信息密度较高者}
+};
+
+% ==================================================
+% 左侧算法标签
+% 使用固定坐标，避免与漏斗主体重叠
+% ==================================================
+
+\node[
+    badge,
+    draw=tblue!45,
+    fill=tblue!8,
+    text=tblue!70!black
+]
+(b1)
+at (-6.25,{(\yA+\yB)/2})
+{SimHash};
+
+\draw[
+    tblue!45,
+    line width=.65pt
+]
+(b1.east)
+--
+(-5.18,{(\yA+\yB)/2});
+
+\node[
+    badge,
+    draw=tcyan!45,
+    fill=tcyan!8,
+    text=tcyan!70!black
+]
+(b2)
+at (-5.55,{(\yB+\yC)/2})
+{MinHash};
+
+\draw[
+    tcyan!45,
+    line width=.65pt
+]
+(b2.east)
+--
+(-4.45,{(\yB+\yC)/2});
+
+\node[
+    badge,
+    draw=tgreen!45,
+    fill=tgreen!8,
+    text=tgreen!70!black
+]
+(b3)
+at (-4.83,{(\yC+\yD)/2})
+{BGE-M3};
+
+\draw[
+    tgreen!45,
+    line width=.65pt
+]
+(b3.east)
+--
+(-3.78,{(\yC+\yD)/2});
+
+% ==================================================
+% 右侧去除率卡片
+% ==================================================
+
+\node[
+    stat,
+    text=tblue!70!black
+]
+(s1)
+at (6.85,{(\yA+\yB)/2})
+{去除 18.6\%};
+
+\draw[
+    tblue!42,
+    line width=.65pt
+]
+(5.18,{(\yA+\yB)/2})
+--
+(s1.west);
+
+\node[
+    stat,
+    text=tcyan!70!black
+]
+(s2)
+at (6.10,{(\yB+\yC)/2})
+{去除 12.3\%};
+
+\draw[
+    tcyan!42,
+    line width=.65pt
+]
+(4.45,{(\yB+\yC)/2})
+--
+(s2.west);
+
+\node[
+    stat,
+    text=tgreen!70!black
+]
+(s3)
+at (5.38,{(\yC+\yD)/2})
+{去除 7.2\%};
+
+\draw[
+    tgreen!42,
+    line width=.65pt
+]
+(3.78,{(\yC+\yD)/2})
+--
+(s3.west);
+
+% ==================================================
+% 底部输出
+% ==================================================
+
+\coordinate (funnelBot) at (0,\yD);
+
+\node[
+    draw=black!38,
+    fill=white,
+    densely dashed,
+    line width=.75pt,
+    rounded corners=4pt,
+    minimum width=6.8cm,
+    minimum height=1.35cm,
+    align=center,
+    below=0.52cm of funnelBot
+]
+(out)
+{
+    {\fontsize{10.5pt}{12pt}\selectfont
+     \bfseries 去重后语料库}
+    \\[4pt]
+    {\fontsize{8pt}{10pt}\selectfont
+     \color{tdark}
+     累计去重率 \textbf{33.8\%}，
+     进入质量评估与双层标签化}
+};
+
+\draw[
+    -{Latex},
+    draw=black!40,
+    line width=.8pt
+]
+(funnelBot)
+--
+(out.north);
+
+\end{tikzpicture}
+
+\end{document}

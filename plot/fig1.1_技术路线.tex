@@ -1,0 +1,106 @@
+\documentclass[11pt, tikz, border=12pt]{standalone}
+\usepackage[fontset=fandol]{ctex}
+\usetikzlibrary{positioning, shadows, arrows.meta, backgrounds, fit, calc}
+
+\definecolor{mblue}{RGB}{72, 108, 142}
+\definecolor{mred}{RGB}{172, 98, 88}
+\definecolor{mgreen}{RGB}{92, 134, 106}
+\definecolor{mpurple}{RGB}{118, 96, 138}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily,
+    stagebox/.style={
+        draw=#1,
+        fill=#1!6,
+        thick,
+        rounded corners=3pt,
+        text width=6.4cm,
+        align=center,
+        inner xsep=10pt,
+        inner ysep=8pt,
+        font=\small
+    },
+    titlebox/.style={
+        draw=#1,
+        fill=#1,
+        text=white,
+        font=\bfseries\small,
+        rounded corners=2pt,
+        inner sep=4.5pt,
+        text width=6.4cm,
+        align=center
+    },
+    rqbox/.style={
+        draw=#1!75,
+        fill=#1!4,
+        dashed,
+        thick,
+        rounded corners=3pt,
+        text width=4.8cm,
+        align=center,
+        font=\footnotesize,
+        inner sep=7pt
+    },
+    arrow/.style={-{Latex[scale=1.15]}, thick, draw=black!60}
+]
+
+    % === Stage 1 ===
+    \node[titlebox=mblue] (cpt-title) at (0, 0) {第一阶段：持续预训练（CPT）};
+    \node[stagebox=mblue, anchor=north] (cpt) at ([yshift=-1pt]cpt-title.south) {
+        困惑度双阈值筛选（$4.8 \le \text{PPL} \le 35.5$）\\
+        1:1 领域--通用语料混合因果语言建模\\
+        注入七类电力知识并保持通用语言能力
+    };
+    \node[rqbox=mblue, left=1.1cm of $(cpt-title.west)!0.5!(cpt.west)$] (rq1) {
+        \textbf{研究问题一（知识注入）}\\[2pt]
+        如何有效注入七类电力知识\\并避免通用能力退化？
+    };
+    \draw[arrow, dashed, draw=mblue] (rq1.east) -- ($(cpt-title.west)!0.5!(cpt.west)$);
+
+    % === Stage 2 ===
+    \node[titlebox=mred, below=0.95cm of cpt.south] (sft-title) {第二阶段：监督微调（SFT）};
+    \node[stagebox=mred, anchor=north] (sft) at ([yshift=-1pt]sft-title.south) {
+        六模块场景原生指令数据合成（6.8 万条）\\
+        CPT 事实先验与 DFT 逆概率校正协同\\
+        保留七类原生风格并构建四类任务能力
+    };
+    \node[rqbox=mred, left=1.1cm of $(sft-title.west)!0.5!(sft.west)$] (rq2) {
+        \textbf{研究问题二（指令构建与微调）}\\[2pt]
+        如何合成场景原生指令数据\\并提升复杂推理泛化能力？
+    };
+    \draw[arrow, dashed, draw=mred] (rq2.east) -- ($(sft-title.west)!0.5!(sft.west)$);
+
+    % === Stage 3 ===
+    \node[titlebox=mgreen, below=0.95cm of sft.south] (rlhf-title) {第三阶段：风格强化学习对齐（RLHF）};
+    \node[stagebox=mgreen, anchor=north] (rlhf) at ([yshift=-1pt]rlhf-title.south) {
+        七类数据归纳映射至三类业务场景\\
+        三维强度 Prefix 与 CORAL-7B 序数判别\\
+        GRPO + Clip-Higher 细粒度风格控制
+    };
+    \node[rqbox=mgreen, left=1.1cm of $(rlhf-title.west)!0.5!(rlhf.west)$] (rq3) {
+        \textbf{研究问题三（风格可控对齐）}\\[2pt]
+        如何通过场景归纳与 Prefix\\实现细粒度风格强度调节？
+    };
+    \draw[arrow, dashed, draw=mgreen] (rq3.east) -- ($(rlhf-title.west)!0.5!(rlhf.west)$);
+
+    % === Stage 4 ===
+    \node[titlebox=mpurple, below=0.95cm of rlhf.south] (dpo-title) {第四阶段：深层安全合规对齐（DPO）};
+    \node[stagebox=mpurple, anchor=north] (dpo) at ([yshift=-1pt]dpo-title.south) {
+        Clean / Recovery / Counter 三类数据协同\\
+        同状态恢复间隔困难状态挖掘（$\alpha=0.3$）\\
+        HS-Weighting 困难状态加权两阶段训练
+    };
+    \node[rqbox=mpurple, left=1.1cm of $(dpo-title.west)!0.5!(dpo.west)$] (rq4) {
+        \textbf{研究问题四（深层安全对齐）}\\[2pt]
+        如何克服中途状态偏好反转\\并抑制正常业务过度拒答？
+    };
+    \draw[arrow, dashed, draw=mpurple] (rq4.east) -- ($(dpo-title.west)!0.5!(dpo.west)$);
+
+    % === 主流程纵向箭头 ===
+    \draw[arrow, line width=1.3pt] (cpt.south) -- (sft-title.north);
+    \draw[arrow, line width=1.3pt] (sft.south) -- (rlhf-title.north);
+    \draw[arrow, line width=1.3pt] (rlhf.south) -- (dpo-title.north);
+
+\end{tikzpicture}
+\end{document}
