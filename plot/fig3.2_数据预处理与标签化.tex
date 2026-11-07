@@ -31,11 +31,10 @@
 }
 
 \newcommand{\hbranchcontent}[4]{%
-    \begin{minipage}[c][1.55cm][c]{4.1cm}
+    \begin{minipage}[c][1.5cm][c]{4.6cm}
         \centering
-        \vspace{2pt}
-        \textcolor{#1!85!black}{\textbf{\small #3}}\\[4pt]
-        \parbox{4.0cm}{\centering\fontsize{7.5pt}{10.5pt}\selectfont\color{tdark}#4}
+        \textcolor{#1!85!black}{\textbf{\small #3}}\\[5pt]
+        \parbox{4.5cm}{\centering\fontsize{7.5pt}{10.5pt}\selectfont\color{tdark}#4}
     \end{minipage}%
 }
 
@@ -50,7 +49,7 @@
 
     % ==================== 0. 原始数据 ====================
     \node[rawbox] (raw) {
-        \begin{minipage}[t][3.6cm][t]{1.65cm}
+        \begin{minipage}[t][3.6cm][t]{1.95cm}
             \centering
             \vspace{4pt}
             \tikz[baseline=-0.5ex, scale=1.15]{
@@ -64,7 +63,7 @@
                 \end{scope}
             }\\[6pt]
             \textbf{\small 原始数据}\\[5pt]
-            \parbox{1.6cm}{\centering\fontsize{7.5pt}{10pt}\selectfont\color{tdark}PDF / Word\\HTML / 表格\\运行日志}
+            \parbox{1.95cm}{\centering\fontsize{7.5pt}{10.5pt}\selectfont\color{tdark}PDF / Word\\HTML / 表格\\运行日志}
         \end{minipage}
     };
 
@@ -124,11 +123,11 @@
     \coordinate (split) at ($(step6.east) + (0.38cm, 0)$);
 
     \node[branchbox=tyellow, anchor=south west] (label1) at ($(split) + (0.45cm, 0.22cm)$) {
-        \hbranchcontent{tyellow}{}{第一层：七类数据类型标签}{用于 CPT 溯源与 SFT 场景原生微调}
+        \hbranchcontent{tyellow}{}{第一层：七类数据类型标签}{用于 CPT 知识来源溯源\\与 SFT 场景原生指令生成}
     };
 
     \node[branchbox=tgreen, anchor=north west] (label2) at ($(split) + (0.45cm, -0.22cm)$) {
-        \hbranchcontent{tgreen}{}{第二层：三类场景归纳标签}{用于 RLHF 阶段三维风格 Prefix 控制}
+        \hbranchcontent{tgreen}{}{第二层：三类场景归纳标签}{由第一层标签映射导出\\用于 RLHF 默认风格 Prefix 选择}
     };
 
     \draw[thick, draw=black!45] (step6.east) -- (split);

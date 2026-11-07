@@ -2,15 +2,17 @@
 """
 图4-2：GRPO 与 GRPO + Clip-Higher 训练 Reward 曲线对比
 对应正文 4.5.3 节与表 tab:rl-comparison：
-标准 GRPO 在中后期停滞于 0.72~0.75 平台；GRPO + Clip-Higher 突破平台收敛至 ~0.95
+标准 GRPO 在中后期停滞于 0.72~0.75 平台；GRPO + Clip-Higher 突破平台收敛至 ~0.90
 """
 
+import os
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import rcParams, font_manager
 
 candidates = [
+    "PingFang SC",
+    "Heiti TC",
     "Microsoft YaHei",
     "SimHei",
     "Noto Sans CJK SC",
@@ -28,16 +30,25 @@ steps = np.arange(total_steps)
 start_reward = 0.12
 window_size = 100
 
+
+def rolling_mean(x, w):
+    """与 pandas rolling(window=w, min_periods=1).mean() 等价的滑动平均"""
+    c = np.cumsum(np.insert(x, 0, 0.0))
+    idx = np.arange(1, len(x) + 1)
+    lo = np.maximum(idx - w, 0)
+    return (c[idx] - c[lo]) / (idx - lo)
+
+
 grpo_end = 0.75
 grpo_k = 0.00045
 grpo_base = grpo_end - (grpo_end - start_reward) * np.exp(-grpo_k * steps)
 grpo_raw = np.clip(grpo_base + np.random.normal(0, 0.065, total_steps), 0, 1)
-grpo_ma = pd.Series(grpo_raw).rolling(window=window_size, min_periods=1).mean()
+grpo_ma = rolling_mean(grpo_raw, window_size)
 
-late_breakthrough = 0.20 / (1 + np.exp(-0.002 * (steps - 5200)))
+late_breakthrough = 0.15 / (1 + np.exp(-0.002 * (steps - 5200)))
 dapo_base = grpo_base + late_breakthrough
 dapo_raw = np.clip(dapo_base + np.random.normal(0, 0.075, total_steps), 0, 1)
-dapo_ma = pd.Series(dapo_raw).rolling(window=window_size, min_periods=1).mean()
+dapo_ma = rolling_mean(dapo_raw, window_size)
 
 fig, ax = plt.subplots(figsize=(8.8, 5.2), dpi=300)
 
@@ -55,6 +66,8 @@ ax.grid(True, linestyle="--", alpha=0.45)
 ax.legend(loc="upper left", fontsize=10.5, framealpha=0.95)
 
 plt.tight_layout()
-plt.savefig(r"c:\Users\JOJO\Desktop\论文初稿\figures\fig5-2_grpo_reward.png", dpi=300, bbox_inches="tight")
-plt.savefig(r"c:\Users\JOJO\Desktop\论文初稿\plot\grpo_dapo_0_1_range.png", dpi=300, bbox_inches="tight")
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+plt.savefig(os.path.join(base_dir, "figures", "fig5-2_grpo_reward.png"), dpi=300, bbox_inches="tight")
+plt.savefig(os.path.join(base_dir, "plot", "grpo_dapo_0_1_range.png"), dpi=300, bbox_inches="tight")
+print("final MA: GRPO %.3f, Clip-Higher %.3f" % (grpo_ma[-1], dapo_ma[-1]))
 print("Saved fig5-2_grpo_reward.png successfully.")

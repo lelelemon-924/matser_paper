@@ -43,35 +43,35 @@
             \draw (-0.12,-0.15) rectangle (0.12,0.15);
             \draw (-0.05, 0.05) -- (0.05, 0.05);
             \draw (-0.05,-0.05) -- (0.05,-0.05);
-        }{基础指令--回答对 $(x, y)$（来自图遍历生成）}{包含单一约束条件与基础推理链条。}
+        }{基础指令--回答对 $(x, y)$}{来自模块四，约束条件少、推理链条短。}
     };
 
     % ---- 中央三步演化 ----
-    \node[card] (step1) at (0, -3.9) {
+    \node[card] (step1) at (0, -3.5) {
         \cardcontent{cEvo}{6.2cm}{
             \draw (0,-0.05) circle(0.06);
             \draw[->] (0.05,-0.01) -- (0.15, 0.12);
             \draw[->] (0.06,-0.05) -- (0.18,-0.05);
             \draw[->] (0.05,-0.09) -- (0.15,-0.22);
-        }{第一步：操作选择与策略生成}{分析任务类型、推理步数与所属数据类型，从五类演化操作集合 $\mathcal{O}$ 中选择适配操作及强度参数 $\theta$。}
+        }{第一步：操作选择与策略生成}{分析认知能力维度、当前复杂度与数据类型，\\从操作集合 $\mathcal{O}$ 中选择操作及强度参数 $\theta$。}
     };
 
-    \node[card] (step2) at (0, -7.6) {
+    \node[card] (step2) at (0, -6.75) {
         \cardcontent{cEvo}{6.2cm}{
             \draw[->] (-0.12,0.05) arc (180:20:0.12);
             \draw[<-] (-0.08,-0.05) arc (180:340:0.12);
-        }{第二步：操作执行与答案同步重写}{依次执行演化操作生成 $x'$，并以 $x'$ 为输入重新生成完整回答 $y'$，确保推理深度与新增约束严格对应。}
+        }{第二步：操作执行与答案同步重写}{依次执行所选操作得到 $x'$，\\再以 $x'$ 为输入重新生成完整回答 $y'$。}
     };
 
-    \node[card] (step3) at (0, -11.3) {
+    \node[card] (step3) at (0, -10.0) {
         \cardcontent{cEvo}{6.2cm}{
             \draw (0,-0.18) -- (0.15,0) -- (0.15,0.18) -- (-0.15,0.18) -- (-0.15,0) -- cycle;
             \draw (-0.05,-0.02) -- (-0.01,-0.06) -- (0.08,0.03);
-        }{第三步：三项内嵌自检与过滤}{（1）复杂度提升检验；（2）约束组合可解性检验（排查互斥条件）；（3）回答完整性检验。}
+        }{第三步：三项自检与过滤}{（1）复杂度是否提升；（2）约束组合是否可解；\\（3）回答是否完整覆盖全部约束。}
     };
 
     % ---- 底部：成功输出 ----
-    \node[card] (output) at (0, -15.3) {
+    \node[card] (output) at (0, -13.5) {
         \cardcontent{cOut}{6.2cm}{
             \draw (-0.15,0.08) arc (180:360:0.15 and 0.05);
             \draw (-0.15,0.08) arc (180:0:0.15 and 0.05);
@@ -79,24 +79,24 @@
             \draw (-0.15,-0.16) arc (180:360:0.15 and 0.05);
             \draw (-0.15,0.08) -- (-0.15,-0.16);
             \draw (0.15,0.08) -- (0.15,-0.16);
-        }{复杂候选 SFT 指令变体 $(x', y')$}{进入 3.6 节自动化多维质量筛选模块。}
+        }{复杂指令变体 $(x', y')$}{进入模块六自动化质量筛选。}
     };
 
     % ---- 右侧反馈环：Optimizer LLM ----
-    \node[card] (optimizer) at (8.4, -7.6) {
-        \cardcontent{cOpt}{4.1cm}{
+    \node[card] (optimizer) at (7.5, -6.75) {
+        \cardcontent{cOpt}{3.3cm}{
             \draw (-0.1,-0.1) -- (0.05,0.05);
             \draw (0.05,0.05) arc (225:45:0.08);
             \fill (0.16, 0.16) circle(0.03);
-        }{Optimizer LLM}{统计批次失败模式，迭代修订演化操作提示词约束。}
+        }{Optimizer LLM}{统计每批失败模式，\\迭代修订演化提示词。}
     };
 
     % ---- 左侧反馈环：人工轻量介入 ----
-    \node[card] (human) at (-8.4, -7.6) {
-        \cardcontent{cHum}{4.1cm}{
+    \node[card] (human) at (-7.5, -6.75) {
+        \cardcontent{cHum}{3.3cm}{
             \fill (0,0.1) circle (0.07);
             \draw (-0.18,-0.15) .. controls (-0.18,-0.02) and (0.18,-0.02) .. (0.18,-0.15);
-        }{人工轻量级抽检}{启动期审阅 100 条 + 常规批次 5\% 随机抽检监控。}
+        }{人工轻量级抽检}{启动期审阅首批 100 条，\\后续每批随机抽检 5\%。}
     };
 
     % ---- Evolution LLM 虚线包络框（自动适配 step1..step3，绝不压框） ----
@@ -104,14 +104,14 @@
         \coordinate (evoTop) at ([yshift=0.52cm]step1.north);
         \coordinate (evoBot) at ([yshift=-0.18cm]step3.south);
         \node[fit=(step1)(step2)(step3)(evoTop)(evoBot), draw=cEvo!45, fill=cEvo!4, dashed, thick, rounded corners=6pt, inner xsep=8pt, inner ysep=4pt] (evobox) {};
-        \node[font=\footnotesize\bfseries, text=cEvo!85!black, anchor=north west] at ([xshift=8pt, yshift=-4pt]evobox.north west) {Evolution LLM 自主演化主干};
+        \node[font=\footnotesize\bfseries, text=cEvo!85!black, anchor=north west] at ([xshift=8pt, yshift=-4pt]evobox.north west) {演化 LLM};
     \end{scope}
 
     % ---- 中央纵向主干箭头 ----
     \draw[arrow] (input.south) -- (step1.north);
     \draw[arrow] (step1.south) -- (step2.north);
     \draw[arrow] (step2.south) -- (step3.north);
-    \draw[arrow] (step3.south) -- node[midway, right=3pt, font=\scriptsize\bfseries, text=cOut!90!black] {通过自检} (output.north);
+    \draw[arrow] (step3.south) -- node[pos=0.62, right=3pt, font=\scriptsize\bfseries, text=cOut!90!black] {通过自检} (output.north);
 
     % ---- 右侧闭环反馈线（标签置于虚线框外侧走廊中央，避免虚线切字） ----
     \coordinate (optMidX) at ($(evobox.east)!0.5!(optimizer.west)$);

@@ -12,6 +12,7 @@
 \definecolor{cOut}{RGB}{46, 142, 84}
 \definecolor{bgGray}{RGB}{247, 249, 251}
 
+% #1 颜色  #2 文字宽度  #3 图标  #4 标题  #5 说明
 \newcommand{\cardbox}[5]{%
     \begin{minipage}[c]{0.95cm}
         \centering
@@ -22,10 +23,10 @@
             \end{scope}
         }
     \end{minipage}%
-    \hspace{1.8mm}%
+    \hspace{2mm}%
     \begin{minipage}[c]{#2}
         \raggedright
-        \textbf{\fontsize{9.8pt}{12pt}\selectfont\textcolor{black!88}{#4}}\\[2pt]
+        \textbf{\fontsize{9.8pt}{12pt}\selectfont\textcolor{black!88}{#4}}\\[3pt]
         {\fontsize{8pt}{10.5pt}\selectfont\color{black!62}#5}
     \end{minipage}%
 }
@@ -33,33 +34,16 @@
 \begin{document}
 \begin{tikzpicture}[
     font=\sffamily,
-    card/.style={
-        draw=black!18,
-        fill=white,
-        thick,
-        rounded corners=5pt,
-        inner sep=7pt,
-        align=left
-    },
+    card/.style={draw=black!18, fill=white, thick, rounded corners=5pt, inner sep=7pt, minimum height=1.55cm},
     arrow/.style={-{Latex[scale=1.08]}, thick, draw=black!50},
     branch/.style={thick, draw=black!50},
-    stagepath/.style 2 args={
-        draw=#1,
-        fill=#2,
-        dashed,
-        thick,
-        rounded corners=6pt
-    },
-    zoneTitle/.style={
-        font=\footnotesize\bfseries,
-        anchor=north west,
-        inner sep=2pt
-    }
+    stagebox/.style 2 args={draw=#1, fill=#2, dashed, thick, rounded corners=6pt},
+    zoneTitle/.style={font=\footnotesize\bfseries, anchor=north west, inner sep=2pt}
 ]
 
-% ---------------- 第一排 ----------------
-\node[card] (seeds) at (-3.15, 0) {
-    \cardbox{cSeed}{3.9cm}{
+% ---------------- 阶段一：两列输入 ----------------
+\node[card] (seeds) at (-3.25, 0) {
+    \cardbox{cSeed}{4.1cm}{
         \draw (-0.15,-0.15) -- (0.15,0.15);
         \draw (-0.15,0.15) -- (0.15,-0.15);
         \draw (0,-0.2) -- (0,0.2);
@@ -67,120 +51,99 @@
     }{模块一：专家种子构建}{七类业务场景约 600 条种子问答}
 };
 
-\node[card] (corpus) at (3.15, 0) {
-    \cardbox{cCorp}{3.9cm}{
+\node[card] (corpus) at (3.25, 0) {
+    \cardbox{cCorp}{4.1cm}{
         \draw (-0.12,-0.12) rectangle (0.12,0.16);
         \draw (-0.06,0.05) -- (0.06,0.05);
         \draw (-0.06,-0.03) -- (0.06,-0.03);
-    }{预处理后 CPT 语料}{经三级去重与 PPL 双阈值筛选}
+    }{预处理后的电力语料}{第 2 章七类标签文本切片}
 };
 
-% ---------------- 第二排 ----------------
-\node[card, below=0.85cm of seeds] (logic) {
-    \cardbox{cLogic}{3.9cm}{
+\node[card, below=0.8cm of seeds] (logic) {
+    \cardbox{cLogic}{4.1cm}{
         \draw (-0.12,-0.15) rectangle (0.12,0.15);
         \draw (0,0) circle (0.05);
         \draw (-0.05,0)--(-0.1,0);
         \draw (0.05,0)--(0.1,0);
-    }{模块二：设计逻辑提取}{抽象 $\ell = (\tau, K, \sigma, \phi)$ 逻辑模板}
+    }{模块二：设计逻辑提取}{逻辑模板 $\ell = (\tau, K, \sigma, \phi)$}
 };
 
-\node[card, below=0.85cm of corpus] (kg) {
-    \cardbox{cKG}{3.9cm}{
+\node[card, below=0.8cm of corpus] (kg) {
+    \cardbox{cKG}{4.1cm}{
         \fill (0,0.12) circle(0.04);
         \fill (-0.12,-0.1) circle(0.04);
         \fill (0.12,-0.1) circle(0.04);
         \draw (0,0.12)--(-0.12,-0.1)--(0.12,-0.1)--cycle;
-    }{模块三：电力知识图谱构建}{抽取校验约 4.2 万条领域三元组}
+    }{模块三：知识图谱构建}{LLM 抽取校验 4.2 万条三元组}
 };
 
-\coordinate (rowTwoBottom) at ($(logic.south)!0.5!(kg.south)$);
+% 汇合线位于阶段一内部，阶段二标题位于左侧，避免与中轴箭头交叠
+\coordinate (bridge) at ($(logic.south |- kg.south) + (0,-0.45)$);
+\coordinate (stage1Bottom) at ($(bridge) + (0,-0.35)$);
+\coordinate (stage2Top) at ($(stage1Bottom) + (0,-0.3)$);
 
-% ---------------- 第三排 ----------------
-\node[card, below=1.35cm of rowTwoBottom] (gen) {
-    \cardbox{cGen}{8.6cm}{
+% ---------------- 阶段二：生成与演化 ----------------
+\node[card, anchor=north] (gen) at ($(0,0 |- stage2Top) + (0,-0.75)$) {
+    \cardbox{cGen}{8.4cm}{
         \draw (-0.15,0.15) -- (0.15,0.15) -- (0.06,0)
               -- (0.06,-0.15) -- (-0.06,-0.15) -- (-0.06,0) -- cycle;
-    }{模块四：受约束图遍历指令生成（Graph Traversal）}{将逻辑模板槽位 $K$ 与图谱合法实体路径 $\mathcal{Q}$ 组合实例化并执行 ROUGE-L 去重}
+    }{模块四：图遍历指令生成}{沿知识需求链采样图谱实体路径，由 LLM 按模板生成问答}
 };
 
-% ---------------- 第四排 ----------------
-\node[card, below=0.85cm of gen] (evo) {
-    \cardbox{cEvo}{8.6cm}{
+\node[card, below=0.8cm of gen] (evo) {
+    \cardbox{cEvo}{8.4cm}{
         \draw[->] (-0.15,-0.15) -- (0.15,0.15);
         \draw (-0.15,-0.05) -- (0.05,-0.05) -- (0.05,-0.15);
         \fill (0.15,0.15) circle (0.03);
-    }{模块五：基于指令演化的复杂任务扩展（Instruction Evolution）}{施加约束增加、条件组合、格式要求、角色设定、风险嵌入五类操作并同步重写答案}
+    }{模块五：指令演化}{施加五类演化操作提升复杂度，并同步重写答案}
 };
 
-% ---------------- 第五排 ----------------
-\node[card, below=1.25cm of evo] (filter) {
-    \cardbox{cFil}{8.6cm}{
+\coordinate (stage2Bottom) at ($(evo.south) + (0,-0.4)$);
+\coordinate (stage3Top) at ($(stage2Bottom) + (0,-0.3)$);
+
+% ---------------- 阶段三：筛选与产出 ----------------
+\node[card, anchor=north] (filter) at ($(0,0 |- stage3Top) + (0,-0.75)$) {
+    \cardbox{cFil}{8.4cm}{
         \draw (0,-0.18) -- (0.15,0) -- (0.15,0.18)
               -- (-0.15,0.18) -- (-0.15,0) -- cycle;
         \draw (-0.05,0) -- (0,-0.05) -- (0.08,0.06);
-    }{模块六：自动化多维质量筛选与评估（Quality Filtering）}{八维加权评分（$Q \ge 0.72$）+ 事实一致性与安全合规一票否决机制}
+    }{模块六：自动化质量筛选}{四维加权评分（Qwen-Max 校准权重，$Q \ge 0.75$），\\事实一致性与合规性一票否决，重复簇内择优去重}
 };
 
-% ---------------- 最终输出 ----------------
-\node[card, below=0.85cm of filter] (output) {
-    \cardbox{cOut}{8.6cm}{
+\node[card, below=0.8cm of filter] (output) {
+    \cardbox{cOut}{8.4cm}{
         \draw (-0.15,0.08) arc (180:360:0.15 and 0.05);
         \draw (-0.15,0.08) arc (180:0:0.15 and 0.05);
         \draw (-0.15,-0.04) arc (180:360:0.15 and 0.05);
         \draw (-0.15,-0.16) arc (180:360:0.15 and 0.05);
         \draw (-0.15,0.08) -- (-0.15,-0.16);
         \draw (0.15,0.08) -- (0.15,-0.16);
-    }{面向七类电力业务场景的高质量 SFT 指令集（约 6.8 万条）}{覆盖四类核心业务任务与多级推理复杂度，完整保留七类数据原生表达风格}
+    }{SFT 指令数据集（约 6.8 万条）}{覆盖四类核心任务与多级难度，保留七类数据原生风格}
 };
 
 % ---------------- 背景阶段框 ----------------
-\coordinate (stageLeft)  at (-6.25, 0);
-\coordinate (stageRight) at ( 6.25, 0);
-
-\coordinate (stage1Top)    at ($(seeds.north)!0.5!(corpus.north)+(0,0.75)$);
-\coordinate (cut12)        at ($(rowTwoBottom)!0.5!(gen.north)$);
-\coordinate (stage1Bottom) at ($(cut12)+(0,0.18)$);
-
-\coordinate (stage2Top)    at ($(gen.north)+(0,0.72)$);
-\coordinate (cut23)        at ($(evo.south)!0.5!(filter.north)$);
-\coordinate (stage2Bottom) at ($(cut23)+(0,0.18)$);
-
-\coordinate (stage3Top)    at ($(filter.north)+(0,0.72)$);
-\coordinate (stage3Bottom) at ($(output.south)+(0,-0.30)$);
+\coordinate (L) at (-6.55, 0);
+\coordinate (R) at ( 6.55, 0);
+\coordinate (stage1Top) at ($(seeds.north) + (0,0.75)$);
+\coordinate (stage3Bottom) at ($(output.south) + (0,-0.35)$);
 
 \begin{scope}[on background layer]
-    \path[stagepath={black!18}{bgGray}]
-        (stageLeft |- stage1Top) rectangle (stageRight |- stage1Bottom);
-    \path[stagepath={cGen!35}{cGen!4}]
-        (stageLeft |- stage2Top) rectangle (stageRight |- stage2Bottom);
-    \path[stagepath={cFil!35}{cFil!4}]
-        (stageLeft |- stage3Top) rectangle (stageRight |- stage3Bottom);
+    \path[stagebox={black!18}{bgGray}] (L |- stage1Top) rectangle (R |- stage1Bottom);
+    \path[stagebox={cGen!35}{cGen!4}]  (L |- stage2Top) rectangle (R |- stage2Bottom);
+    \path[stagebox={cFil!35}{cFil!4}]  (L |- stage3Top) rectangle (R |- stage3Bottom);
 
-    \node[zoneTitle, text=black!65]
-        at ($ (stageLeft |- stage1Top) + (3mm,-2mm) $)
-        {阶段一：任务逻辑解构与结构化知识供给（模块一至模块三）};
-
-    \node[zoneTitle, text=cGen!85!black]
-        at ($ (stageLeft |- stage2Top) + (3mm,-2mm) $)
-        {阶段二：规模化图遍历生成与复杂度演化（模块四至模块五）};
-
-    \node[zoneTitle, text=cFil!85!black]
-        at ($ (stageLeft |- stage3Top) + (3mm,-2mm) $)
-        {阶段三：多维质量把关与数据集产出（模块六）};
+    \node[zoneTitle, text=black!65]        at ($(L |- stage1Top) + (3mm,-2mm)$) {阶段一：知识与逻辑准备（模块一至三）};
+    \node[zoneTitle, text=cGen!85!black]   at ($(L |- stage2Top) + (3mm,-2mm)$) {阶段二：生成与演化（模块四、五）};
+    \node[zoneTitle, text=cFil!85!black]   at ($(L |- stage3Top) + (3mm,-2mm)$) {阶段三：质量筛选（模块六）};
 \end{scope}
 
 % ---------------- 连线 ----------------
 \draw[arrow] (seeds.south) -- (logic.north);
 \draw[arrow] (corpus.south) -- (kg.north);
 
-\path (rowTwoBottom) -- coordinate[midway] (bridgeY) (gen.north);
-\coordinate (merge) at (gen.north |- bridgeY);
-\coordinate (logicTurn) at (logic.south |- bridgeY);
-\coordinate (kgTurn) at (kg.south |- bridgeY);
-
-\draw[branch, rounded corners=5pt] (logic.south) -- (logicTurn) -- (merge);
-\draw[branch, rounded corners=5pt] (kg.south) -- (kgTurn) -- (merge);
+\coordinate (merge) at (0,0 |- bridge);
+\draw[branch, rounded corners=5pt] (logic.south) -- (logic.south |- bridge) -- (merge);
+\draw[branch, rounded corners=5pt] (kg.south) -- (kg.south |- bridge) -- (merge);
 \draw[arrow] (merge) -- (gen.north);
 
 \draw[arrow] (gen.south) -- (evo.north);

@@ -65,8 +65,8 @@
 
     % ==================== 4. 第四列：DPO ====================
     \node[header=tpink, right=1.15cm of rlhf-head] (dpo-head) {阶段四：DPO 安全对齐};
-    \node[box=tpink, below=0.35cm of dpo-head] (dpo-in) {\textbf{输入层}\\RLHF 输出基座模型\\三类协同安全偏好数据};
-    \node[box=tpink, below=0.45cm of dpo-in] (dpo-proc) {\textbf{核心处理}\\Clean / Recovery / Counter\\困难状态挖掘 + HS-Weighting};
+    \node[box=tpink, below=0.35cm of dpo-head] (dpo-in) {\textbf{输入层}\\RLHF 输出基座模型\\两类互补安全偏好数据};
+    \node[box=tpink, below=0.45cm of dpo-in] (dpo-proc) {\textbf{核心处理}\\Recovery（含 $k=0$）/ Counter\\HS-Weighting 困难状态加权};
     \node[box=tpink, below=0.45cm of dpo-proc] (dpo-out) {\textbf{输出层}\\最终部署模型\\（知识+任务+风格+安全）};
 
     % ==================== 5. 顶部标签数据流 ====================

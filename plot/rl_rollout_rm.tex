@@ -1,0 +1,125 @@
+\documentclass[11pt, tikz, border=8pt]{standalone}
+\usepackage[fontset=fandol]{ctex}
+\usepackage{amsmath, amssymb, bm}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds, decorations.pathreplacing}
+
+\definecolor{cPre}{RGB}{204, 112, 34}
+\definecolor{cQ}{RGB}{64, 128, 186}
+\definecolor{cPol}{RGB}{38, 148, 128}
+\definecolor{cOut}{RGB}{136, 84, 162}
+\definecolor{cRM}{RGB}{62, 82, 102}
+\definecolor{cRw}{RGB}{196, 150, 24}
+\definecolor{cHead}{RGB}{44, 108, 162}
+\definecolor{cHL}{RGB}{214, 69, 69}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily\footnotesize,
+    box/.style={draw=#1!75!black, fill=#1!9, thick, rounded corners=3pt, align=center, inner sep=5pt},
+    arr/.style={-{Latex[scale=1.0]}, thick, draw=black!55},
+    tok/.style={draw=black!45, fill=white, minimum width=0.6cm, minimum height=0.48cm, inner sep=1pt, font=\scriptsize},
+    hid/.style={circle, draw=black!45, fill=white, minimum size=0.42cm, inner sep=0pt},
+    lbl/.style={font=\scriptsize, text=black!65, align=center},
+    colhead/.style={font=\scriptsize\bfseries, text=cHead!80!black, align=center},
+]
+
+% ======================= 上半部分：Rollout =======================
+\node[box=cPre, minimum width=4.0cm] (pre) at (0, 0.55)
+    {\textbf{强度条件化 Prefix} $p(\bm{\ell})$\\[1pt]{\scriptsize [展开:L1][安全:L2][语气:L2]}};
+\node[box=cQ, minimum width=4.0cm, below=0.12cm of pre] (q)
+    {\textbf{问题} $x$\\[1pt]{\scriptsize 某 220kV 主变顶层油温持续升高，}\\{\scriptsize 请分析原因并给出排查建议}};
+\node[fit=(pre)(q), draw=black!35, dashed, rounded corners=4pt, inner sep=3pt,
+      label={[lbl]above:策略输入 $p(\bm{\ell}) \oplus x$}] (inp) {};
+
+\node[box=cPol, minimum height=1.5cm, minimum width=2.4cm] (pol) at (4.7, -0.1)
+    {\textbf{策略模型} $\pi_\theta$\\[2pt]{\scriptsize 由 SFT 模型初始化}};
+
+\node[box=cOut, minimum width=2.1cm, minimum height=1.3cm] (o3) at (8.67, 0.12) {};
+\node[box=cOut, minimum width=2.1cm, minimum height=1.3cm] (o2) at (8.56, 0.01) {};
+\node[box=cOut, minimum width=2.1cm, minimum height=1.3cm] (o1) at (8.45, -0.1)
+    {\textbf{回答} $o_i$\\[2pt]{\scriptsize $i = 1, \dots, G$}};
+\node[lbl, below=0.1cm of o1] {采样 $G = 8$ 个回答};
+
+\node[box=cRM, minimum height=1.5cm, minimum width=2.4cm] (rm) at (12.75, -0.1)
+    {\textbf{CORAL-7B}\\[2pt]{\scriptsize 风格奖励模型（冻结）}};
+
+\node[box=cRw] (rw) at (16.6, -0.1)
+    {\textbf{强度偏差奖励}\\[3pt]$r_i = 1 - \dfrac{|\mathbb{E}[\text{level}_{k^*}](o_i) - \ell^*|}{2}$};
+\node[box=cRw] (adv) at (16.6, 1.95)
+    {\textbf{组内优势}\\[3pt]$\hat{A}_i = \dfrac{r_i - \mu(r)}{\sigma(r)}$};
+
+\draw[arr] (inp.east |- pol) -- (pol.west);
+\draw[arr] (pol.east) -- node[lbl, above] {Rollout} (o1.west |- pol);
+\draw[arr] (o3.east |- rm) -- node[lbl, above] {$(x, o_i)$} node[lbl, below] {去掉 Prefix} (rm.west);
+\draw[arr] (rw.north) -- (adv.south);
+\draw[arr, dashed, draw=cPol!80!black] (adv.west) -| node[lbl, pos=0.3, above, text=cPol!70!black]
+    {GRPO + Clip-Higher：按 $\hat{A}_i$ 更新 $\pi_\theta$} (pol.north);
+
+% ======================= 下半部分：奖励模型结构 =======================
+\def\ptop{-2.35}
+\def\yh{-4.4}
+\def\yT{-5.55}
+\def\yt{-6.7}
+
+\foreach \i/\t in {0/{$x_1$}, 1/{$\cdots$}, 2/{$x_m$}, 3/{$o_1$}, 4/{$\cdots$}, 5/{$o_{n-1}$}} {
+    \node[tok] (t\i) at ({-1.1 + 0.7*\i}, \yt) {\t};
+    \node[hid] (h\i) at ({-1.1 + 0.7*\i}, \yh) {};
+}
+\node[tok, draw=cHL!80!black, thick] (t6) at (3.1, \yt) {$o_n$};
+\node[hid, fill=cHL!85, draw=cHL!80!black] (h6) at (3.1, \yh) {};
+
+\node[draw=cRM!70!black, fill=cRM!10, thick, rounded corners=3pt, minimum width=4.9cm, minimum height=0.85cm,
+      align=center, font=\scriptsize] (tf) at (1.0, \yT)
+    {\textbf{Qwen2.5-7B-Instruct 主干}\\28 层 Transformer，因果注意力};
+\foreach \i in {0,...,6} {
+    \draw[-{Latex[scale=0.6]}, black!45] (t\i.north) -- (t\i.north |- tf.south);
+    \draw[-{Latex[scale=0.6]}, black!45] (h\i.south |- tf.north) -- (h\i.south);
+}
+
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}, black!55]
+    ($(t0.south west) + (0, -0.05)$) -- ($(t2.south east) + (0, -0.05)$)
+    node[midway, below=4pt, lbl] {问题 $x$};
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}, black!55]
+    ($(t3.south west) + (0, -0.05)$) -- ($(t6.south east) + (0, -0.05)$)
+    node[midway, below=4pt, lbl] {回答 $o_i$（不含 Prefix）};
+
+\node[lbl, text=cHL!80!black, anchor=south east, align=right] at (3.4, -3.98)
+    {取最后一个 token 的隐藏状态\\$\mathbf{h} = \mathbf{h}_T \in \mathbb{R}^{3584}$};
+
+% 三个 CORAL 序数分类头
+\node[colhead] at (5.85, -2.72) {① 共享线性投影};
+\node[colhead] at (9.05, -2.72) {② 有序偏置 + Sigmoid};
+\node[colhead] at (12.2, -2.72) {③ 期望强度};
+
+\foreach \r/\y/\name in {1/-3.6/展开程度, 2/-5.05/安全合规, 3/-6.5/语气定位} {
+    \node[box=cHead, minimum width=2.1cm, minimum height=1.0cm] (lin\r) at (5.85, \y)
+        {\textbf{\name}\\[1pt]$z_k = \mathbf{w}_k^{\top}\mathbf{h}$};
+    \node[box=cHead, minimum width=3.1cm, minimum height=1.0cm] (sig\r) at (9.05, \y)
+        {$q_k^{(1)} = \sigma(z_k + b_{k,1})$\\[1pt]$q_k^{(2)} = \sigma(z_k + b_{k,2})$};
+    \node[box=cHead, minimum width=2.3cm, minimum height=1.0cm] (ex\r) at (12.2, \y)
+        {$\mathbb{E}[\text{level}_k]$\\[1pt]{\scriptsize $= 1 + q_k^{(1)} + q_k^{(2)}$}};
+    \draw[arr] (h6.east) -- (lin\r.west);
+    \draw[arr] (lin\r.east) -- (sig\r.west);
+    \draw[arr] (sig\r.east) -- (ex\r.west);
+}
+
+\node[lbl, align=left, anchor=north west] at (4.75, -7.2)
+    {三级概率：$P_{k,1} = 1 - q_k^{(1)}$，\ $P_{k,2} = q_k^{(1)} - q_k^{(2)}$，\ $P_{k,3} = q_k^{(2)}$\\[1pt]
+     有序偏置 $b_{k,1} \ge b_{k,2}$ 保证 $q_k^{(1)} \ge q_k^{(2)}$；三个头共 6 个 logit};
+
+% 主控维度选择 -> 奖励
+\node[box=cRw] (ksel) at (16.6, -5.05)
+    {\textbf{选取主控维度} $k^*$\\[2pt]$\mathbb{E}[\text{level}_{k^*}](o_i)$};
+\foreach \r in {1,2,3} { \draw[arr] (ex\r.east) -- (ksel.west); }
+\draw[arr] (ksel.north) -- (rw.south);
+
+% 背景面板
+\begin{scope}[on background layer]
+    \node[fit={(-1.75, \ptop) (13.65, -8.35)}, draw=cRM!45, fill=cRM!3, dashed, thick, rounded corners=6pt, inner sep=0pt] (panel) {};
+\end{scope}
+\node[font=\footnotesize\bfseries, text=cRM!85!black, anchor=north west] at ($(panel.north west) + (0.15, -0.1)$)
+    {CORAL-7B 奖励模型结构};
+\draw[dashed, thick, draw=cRM!55] (rm.south) -- node[lbl, right] {内部结构} (rm.south |- panel.north);
+
+\end{tikzpicture}
+\end{document}
