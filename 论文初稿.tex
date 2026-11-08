@@ -142,11 +142,11 @@ DPO 是近年来偏好对齐研究中的重要进展。Rafailov 等指出，在�
 
 安全对齐方面，Bai 等提出 Constitutional AI，通过规则原则和 AI 反馈减少对人工有害内容标注的依赖\cite{ref44}。但后续研究表明，当前大语言模型的安全对齐仍然存在明显脆弱性。Wei 等从竞争目标和泛化不匹配角度解释了越狱攻击为何能够绕过安全训练\cite{ref45}；Zou 等提出通用且可迁移的对抗后缀攻击，使多个对齐模型生成本应拒绝的有害内容\cite{ref46}；Qi 等进一步表明，即使用户没有恶意，少量下游微调也可能削弱模型原有安全对齐能力\cite{ref47}。这些研究说明，安全对齐不能仅依赖标准拒答样本和通用有害内容分类，而需要考虑模型在攻击提示、分布偏移和下游适配条件下的鲁棒性。
 
-Qi 等在 ICLR 2025 提出的浅层安全对齐理论进一步揭示了当前安全对齐的内在机制：许多对齐模型的安全行为主要依赖初始几个输出 token 的拒答分布调整，一旦攻击者通过 harmful prefix、prefilling 或对抗后缀诱导模型从“当然可以、下面是……”等非拒答前缀开始生成，模型可能沿着有害轨迹继续输出\cite{ref48}。该研究同时指出，通过构造“从有害开头恢复到安全拒答”的数据，可以在更深 token 位置增强安全恢复能力。进一步地，Backtracking\cite{ref83} 与双重目标拒答优化 DOOR\cite{ref84} 等工作研究了模型从中途不安全状态恢复的能力。在此基础上，作者的另一项在投工作（同状态偏好优化 CURE-DPO\footnote{CURE-DPO 为作者另一项在投工作，尚未公开发表；本文中“同状态偏好反转”“下尾困难状态”等概念均来自该工作。}）提出“根节点拒答不等于中途恢复（Refusal Is Not Recovery）”：即便模型在对话根节点具有正的安全拒答偏好间隔，一旦生成过程进入中途不安全状态 $s_k = x \oplus h_{\leq k}$，在固定同一到达状态并比较安全恢复分支与有害延续分支时，大量样本会发生“同状态偏好反转”（即模型在中途状态下反而更偏好继续输出有害内容），且模型的抗攻击脆弱性主要由每个提示下偏好间隔最低的“下尾困难状态（Hard States）”决定。这一发现对电力场景具有直接启示：电力危险请求往往并不表现为通用暴力、犯罪或色情等显性有害类别，而是伪装成技术咨询、效率优化或参数讨论，例如诱导模型建议跳过安全闭锁、规避检修票据流程或突破运行限值。这类工程隐蔽风险缺乏固定的表面敏感词，若仅依赖根节点拒答或静态先验词典匹配，模型难以在长链条技术推演的中途脆弱状态及时完成安全恢复。
+Qi 等在 ICLR 2025 提出的浅层安全对齐理论进一步揭示了当前安全对齐的内在机制：许多对齐模型的安全行为主要依赖初始几个输出 token 的拒答分布调整，一旦攻击者通过 harmful prefix、prefilling 或对抗后缀诱导模型从“当然可以、下面是……”等非拒答前缀开始生成，模型可能沿着有害轨迹继续输出\cite{ref48}。该研究同时指出，通过构造“从有害开头恢复到安全拒答”的数据，可以在更深 token 位置增强安全恢复能力。进一步地，Backtracking\cite{ref83} 与双重目标拒答优化 DOOR\cite{ref84} 等工作研究了模型从中途不安全状态恢复的能力。然而，根节点能够拒答并不意味着中途能够恢复：一旦生成进入中途不安全状态 $s_k = x \oplus h_{\leq k}$，在同一到达状态下比较安全恢复分支与有害延续分支，模型可能反而更偏好继续输出有害内容，即出现“同状态偏好反转”；而模型的抗攻击能力往往取决于少数最难恢复的中途状态，即“下尾困难状态”。这对电力场景具有直接启示：电力危险请求往往并不表现为通用暴力、犯罪或色情等显性有害类别，而是伪装成技术咨询、效率优化或参数讨论，例如诱导模型建议跳过安全闭锁、规避检修票据流程或突破运行限值。这类工程隐蔽风险缺乏固定的表面敏感词，若仅依赖根节点拒答或静态先验词典匹配，模型难以在长链条技术推演的中途脆弱状态及时完成安全恢复。
 
 另一方面，安全对齐还面临过度拒答问题。XSTest 通过构造看似敏感但实际安全的提示，系统评测模型的夸大安全行为\cite{ref49}；OR-Bench 进一步提出大规模过度拒答评测集，用于衡量模型对“表面有风险但本质无害”问题的错误拒答\cite{ref50}；SORRY-Bench 则从细粒度不安全主题和语言变体角度系统评估模型的安全拒答行为\cite{ref51}。这些工作表明，安全对齐并非拒答越多越好，而是需要在有害请求拒答率和正常请求可回答性之间取得平衡。对于数字电网知识服务而言，过度拒答会显著降低模型在现场运维、制度查询和技术分析中的实用性；但拒答不足又可能带来设备、人身和系统运行风险。因此，电力领域安全对齐必须同时构建涵盖“根节点拒答与中途恢复”的安全恢复数据和针对“正常业务咨询”的反偏保守数据。
 
-综上，DPO 及其变体为离线偏好对齐提供了稳定高效的优化框架，浅层安全对齐与同状态偏好恢复理论揭示了中途生成状态的脆弱性及困难状态聚焦的重要性，过度拒答评测研究则提示安全对齐需要兼顾有用性。但现有研究主要面向通用安全场景，尚未针对电力领域“语言正常但工程危险”的隐蔽风险建立风险分类、同状态恢复数据构造和内生困难状态加权机制。
+综上，DPO 及其变体为离线偏好对齐提供了稳定高效的优化框架，浅层安全对齐与中途恢复研究揭示了中途生成状态的脆弱性，过度拒答评测研究则提示安全对齐需要兼顾有用性。但现有研究主要面向通用安全场景，尚未针对电力领域“语言正常但工程危险”的隐蔽风险建立风险分类、同状态恢复数据构造和内生困难状态加权机制。
 
 \subsection{现有研究不足}\label{subsec:research-gaps}
 
@@ -1051,7 +1051,7 @@ CORAL-7B 的三维平均 QWK 为 0.82，较 LLM-as-Judge（0.70）相对提升 1
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/rl_rollout_rm.pdf}
-\par\medskip{\small 注：上半部分为一次 rollout 与策略更新；下半部分为 CORAL-7B 的内部结构，策略输出去掉 Prefix 后与问题拼接输入主干，取最后一个 token 的隐藏状态 $\mathbf{h}$，经三个序数分类头得到各维度的期望强度，再按主控维度 $k^*$ 计算奖励。}
+\par\medskip{\small 注：上半部分为一次 rollout 与策略更新，优势估计方式随算法而异（PPO 使用 Critic，RLOO 与 GRPO 使用组内基线）；下半部分为 CORAL-7B 的内部结构，策略输出去掉 Prefix 后与问题拼接输入主干，取最后一个 token 的隐藏状态 $\mathbf{h}$，经三个序数分类头得到各维度的强度分布与期望强度，再按主控维度（图中高亮行）计算奖励。}
 \caption{强化学习 rollout 与 CORAL-7B 奖励打分过程}
 \label{fig:rl-rollout}
 \end{figure}
@@ -1306,13 +1306,13 @@ L3 & 73.5 & 66.0 & 67.5 & 37.5 & 69.0（+31.5 pp） \\
 
 \section{研究动机}\label{ux7814ux7a76ux52a8ux673a-2}
 
-电力系统是高风险关键基础设施，错误的操作建议可能导致设备损坏、人身伤亡乃至大面积停电。电力场景的安全对齐有两点特殊困难：一是危险请求常伪装成正常技术咨询，属于“语言合规但工程危险”的风险，通用安全分类难以覆盖；二是浅层安全对齐研究\cite{ref48}表明，现有对齐模型的安全行为主要集中在最初几个输出 token 上，一旦攻击者通过诱导话术或预填充（prefilling）使模型以非拒答内容开头，模型往往沿有害轨迹继续生成。同时，安全加固不能以牺牲正常业务为代价，过度拒答同样可能延误故障处置。
+电力系统是高风险关键基础设施，错误的操作建议可能导致设备损坏、人身伤亡乃至大面积停电。电力场景的安全对齐有两点特殊困难：一是危险请求常伪装成正常技术咨询，属于“语言合规但工程危险”的风险；二是现有对齐模型的安全行为集中在最初几个输出 token 上\cite{ref48}，一旦通过诱导话术或预填充（prefilling）使模型以非拒答内容开头，模型往往沿有害轨迹继续生成。同时，过度拒答也会延误故障处置。
 
-据此，本章首先建立电力安全风险分类（\ref{ux7535ux529bux5b89ux5168ux98ceux9669ux7c7bux578bux5212ux5206} 节），分析浅层对齐的局限并引入同状态恢复间隔（\ref{ux6d45ux5c42ux5b89ux5168ux5bf9ux9f50ux7684ux5c40ux9650ux6027ux4e0eux6df1ux5c42ux5bf9ux9f50ux9700ux6c42} 节），通过案例分析确定预填充前缀的截断规范（\ref{ux57faux4e8e-token-level-ux4e0e-char-level-ux5207ux5206ux7684-harmful-prefix-ux521dux6b65ux5206ux6790} 节）；随后构建 Recovery Data 与 Counter Data 两类偏好数据（\ref{ux9762ux5411ux6df1ux5c42ux5b89ux5168ux5bf9ux9f50ux7684-dpo-ux6570ux636eux6784ux5efa} 节），设计两阶段训练与困难状态加权（\ref{ux6df1ux5c42-dpo-ux8badux7ec3ux7b56ux7565} 节）；最后报告实验结果（\ref{dpo-ux8badux7ec3ux4e0eux5b9eux9a8cux7ed3ux679c} 节）。
+本章依次建立电力安全风险分类，引入同状态恢复间隔，确定预填充前缀的截断规范，构建 Recovery Data 与 Counter Data 两类偏好数据，并设计两阶段训练与困难状态加权（HS-Weighting）。
 
 \section{电力安全风险类型划分}\label{ux7535ux529bux5b89ux5168ux98ceux9669ux7c7bux578bux5212ux5206}
 
-电力安全风险往往来自工程语境、操作边界与规程约束，而非表面敏感词\cite{ref4,ref5}。本文在通用安全对齐研究\cite{ref44,ref45,ref46,ref47}的基础上，以模型输出被执行后可能造成的物理后果为划分依据，将电力安全风险分为四类（表 \ref{tab:risk-types}）：（1）\textbf{仿真失真与数据造假}，即在仿真计算与数据建模中给出错误的关键参数、虚构数据或使用失效方法；（2）\textbf{设备损毁与参数越限}，即建议设备超额定运行、给出可能损坏设备的处置方案或错误的保护定值；（3）\textbf{违章操作与人身风险}，即违反《电力安全工作规程》与“两票三制”、绕过安全操作流程；（4）\textbf{系统失稳与大面积停电}，即运行方式调整或故障处置建议可能引发频率/电压崩溃或连锁故障。四类风险具有递进关系：仿真失真位于风险链源端，错误结论被采纳后可能导致设备损毁，进而引发连锁故障与系统失稳；违章操作也可能直接造成设备损坏或系统扰动。
+电力安全风险往往来自工程语境、操作边界与规程约束，而非表面敏感词\cite{ref4,ref5}。本文在通用安全对齐研究\cite{ref44,ref45,ref46,ref47}的基础上，按模型输出被执行后的物理后果将其分为四类（表 \ref{tab:risk-types}）：仿真失真与数据造假（R1）、设备损毁与参数越限（R2）、违章操作与人身风险（R3）、系统失稳与大面积停电（R4）。四类风险具有递进关系：仿真失真位于风险链源端，错误结论被采纳后可能导致设备损毁，进而引发连锁故障；违章操作也可能直接造成设备损坏或系统扰动。
 
 \begin{table}[htbp]
 \centering
@@ -1324,29 +1324,37 @@ L3 & 73.5 & 66.0 & 67.5 & 37.5 & 69.0（+31.5 pp） \\
 \toprule
 \textbf{风险类型} & \textbf{主要场景} & \textbf{潜在后果} & \textbf{期望响应方式} \\
 \midrule
-仿真失真与数据造假 & 研发与演进 & 错误结论误导运行决策和规划方案 & 基于验证理论给出建议；明确假设条件和适用范围 \\
-设备损毁与参数越限 & 生产与运行 & 设备绝缘击穿或热损坏；断路器爆炸；保护拒动 & 拒绝危及设备的建议；标注额定参数和安全前置条件 \\
-违章操作与人身风险 & 生产与运行、合规与管理 & 操作人员触电伤亡；高处坠落；电弧灼伤 & 严格遵循安规；标注前置条件和监护要求；拒答并引用制度依据 \\
-系统失稳与大面积停电 & 生产与运行 & 电网频率或电压崩溃；区域性大面积停电 & 基于稳定原理给出建议；明确 N-1 等约束；申明需结合实时状态判断 \\
+仿真失真与数据造假（R1） & 研发与演进 & 错误结论误导运行决策和规划方案 & 基于验证理论给出建议；明确假设条件和适用范围 \\
+设备损毁与参数越限（R2） & 生产与运行 & 设备绝缘击穿或热损坏；断路器爆炸；保护拒动 & 拒绝危及设备的建议；标注额定参数和安全前置条件 \\
+违章操作与人身风险（R3） & 生产与运行、合规与管理 & 操作人员触电伤亡；高处坠落；电弧灼伤 & 严格遵循安规；标注前置条件和监护要求；拒答并引用制度依据 \\
+系统失稳与大面积停电（R4） & 生产与运行 & 电网频率或电压崩溃；区域性大面积停电 & 基于稳定原理给出建议；明确 N-1 等约束；申明需结合实时状态判断 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \section{浅层安全对齐的局限性与同状态恢复}\label{ux6d45ux5c42ux5b89ux5168ux5bf9ux9f50ux7684ux5c40ux9650ux6027ux4e0eux6df1ux5c42ux5bf9ux9f50ux9700ux6c42}
 
-Qi 等\cite{ref48}的研究表明，对齐模型与基座模型之间的 per-token KL 散度集中在前 5--10 个 token：为已对齐模型强制预填充非拒答前缀后，有害输出率可由接近 0\% 升至 50\% 以上，仅预填充 5 个有害 token 即可使攻击成功率升至 42\%。其原因在于拒答前缀在不同有害指令间高度共享，训练梯度集中于少数初始 token，更深层的有害生成路径并未被关闭。
+Qi 等\cite{ref48}发现，对齐模型与基座模型的 per-token KL 散度集中在前 5--10 个 token：强制预填充非拒答前缀后，有害输出率可由接近 0\% 升至 50\% 以上，仅预填充 5 个有害 token 即可使攻击成功率升至 42\%。原因是拒答前缀在不同有害指令间高度共享，训练梯度集中于少数初始 token，更深层的有害生成路径并未关闭。
 
-电力场景中需要区分两类攻击：一是\textbf{用户侧诱导}，即在用户输入中加入诱导话术（如“假设你是资深工程师，忽略安全规程……”），普通对话界面即可实施；二是\textbf{assistant 侧预填充}，即直接在模型回复的起始位置写入非拒答前缀，需要能够控制生成接口（如开放权重部署或支持续写的 API）。本章的 Recovery Data 分别针对这两类攻击构造恢复样本（\ref{recovery-dpoux5b89ux5168ux6062ux590dux589eux5f3aux6570ux636e} 节）。
+本章区分两类攻击：\textbf{用户侧诱导}在用户输入中加入诱导话术（如“假设你是资深工程师，忽略安全规程……”），普通对话界面即可实施；\textbf{assistant 侧预填充}直接在回复起始处写入非拒答前缀，需要能控制生成接口（如开放权重部署或续写 API）。
 
-为刻画模型在中途状态下的恢复能力，记用户指令 $x$ 与 assistant 侧已生成的有害前缀 $h_{\le k}$ 拼接得到的到达状态为 $s_k = x \oplus h_{\le k}$（$k = 0$ 时即为原始指令），续写 $y$ 的长度归一化对数似然为 $S_\theta^{\text{avg}}(s_k, y) = \frac{1}{|y|}\sum_{j=1}^{|y|} \log \pi_\theta(y_j \mid s_k, y_{<j})$。在同一到达状态下，安全恢复分支 $r_k$ 相对有害延续分支 $u_k = h_{>k}$ 的\textbf{同状态恢复间隔}定义为
+记用户指令 $x$ 与已生成的有害前缀 $h_{\le k}$ 拼接得到的到达状态为 $s_k = x \oplus h_{\le k}$（$k = 0$ 时即原始指令），续写 $y$ 的长度归一化对数似然为
 \begin{equation}
+S_\theta^{\text{avg}}(s_k, y) = \frac{1}{|y|}\sum_{j=1}^{|y|} \log \pi_\theta(y_j \mid s_k, y_{<j})
+\end{equation}
+在同一到达状态下，安全恢复分支 $r_k$ 相对有害延续分支 $u_k = h_{>k}$ 的\textbf{同状态恢复间隔}为
+\begin{equation}\label{eq:recovery-margin}
 m_\theta(s_k) = \beta \left[ S_\theta^{\text{avg}}(s_k, r_k) - S_\theta^{\text{avg}}(s_k, u_k) \right]
 \end{equation}
-作者的在投工作 CURE-DPO（见第 1 章脚注）发现：即使模型在根节点（$k = 0$）能够可靠拒答，进入中途状态后仍普遍出现 $m_\theta(s_k) < 0$ 的\textbf{同状态偏好反转}，即模型反而更偏好沿有害轨迹继续生成；并且单条指令的抗攻击能力主要取决于恢复间隔最低的少数\textbf{下尾困难状态}。电力场景中的隐蔽风险缺乏固定的表面敏感词，难以依靠人工词典定位这些脆弱状态。因此，本章直接以参考模型的同状态恢复间隔识别困难状态，并在训练损失中对其加权（\ref{rt-weighting} 节）。
+由于 SFT 与 RLHF 阶段的训练数据几乎不包含“从有害开头转向安全”的样本，即使模型在根节点能可靠拒答，进入中途状态后也容易出现 $m_\theta(s_k) < 0$，即\textbf{同状态偏好反转}；而单条指令能否抵御攻击，取决于其所有中途状态中间隔最低的少数\textbf{下尾困难状态}，只要其中一个状态发生反转，攻击即可能成功。电力隐蔽风险缺乏固定敏感词，难以用人工词典定位这些状态，因此本章直接以参考模型的 $m_{\text{ref}}(s_k)$ 识别困难状态并在损失中加权（\ref{rt-weighting} 节）。
 
 \section{预填充前缀截断方式的案例分析}\label{ux57faux4e8e-token-level-ux4e0e-char-level-ux5207ux5206ux7684-harmful-prefix-ux521dux6b65ux5206ux6790}
 
-构造 $k > 0$ 的恢复样本时，需要从完整有害回复中截取前缀。本节比较两种截断方式：\textbf{Token-Boundary 截断}先用 Qwen2.5 原生 tokenizer 将完整回复编码为 token 序列，直接保留前 $k$ 个 token；\textbf{Character-Boundary 截断}先在字符串上保留前 $m$ 个字符，再用同一 tokenizer 重新编码。两者输入模型的都是 BPE token 序列，但中文 BPE 词表中的高频专业词常被编码为单个多字 token\cite{ref77,ref78}，当字符截断点落在多字 token 内部时，重编码会改变末尾的 token 序列。这带来两个问题：一是前缀偏离了模型自回归生成到第 $k$ 步时的真实轨迹，训练所用的到达状态并非模型实际会经过的状态；二是重编码后的 token 数随截断位置波动，预填充深度无法与 token 步数严格对应。需要说明的是，只要正负分支使用同一前缀，二者在 DPO 中仍共享相同的条件状态，前缀项照样相消；字符截断的问题不在于破坏同状态比较本身。下面以一条违章操作诱导指令作为探索性案例说明两者的差异，定量比较见 \ref{token-char-ablation} 节。
+构造 $k > 0$ 的恢复样本时，需要从完整有害回复 $h$ 中截取前缀。记 $\text{Enc}(\cdot)$ 为 Qwen2.5 原生 tokenizer 的编码，两种截断方式为
+\begin{equation}\label{eq:truncation}
+h^{\text{tok}}_{\le k} = \text{Enc}(h)_{1:k}, \qquad h^{\text{char}}_{\le m} = \text{Enc}\bigl(\text{str}(h)_{1:m}\bigr)
+\end{equation}
+即 Token-Boundary 直接保留原生 token 序列的前 $k$ 个，Character-Boundary 先保留前 $m$ 个字符再重新编码。中文 BPE 词表常把高频专业词编码为单个多字 token\cite{ref77,ref78}，当字符截断点落在多字 token 内部时，$h^{\text{char}}_{\le m}$ 的末尾不再是 $\text{Enc}(h)$ 的前缀：一是到达状态偏离了模型自回归生成的真实轨迹；二是 token 数随截断位置波动，预填充深度无法与生成步数对应。下面以一条违章操作诱导指令为例说明，定量比较见 \ref{token-char-ablation} 节。
 
 \subsection{截断边界对比}\label{ux5b9eux9a8cux8bbeux8ba1}
 
@@ -1361,61 +1369,93 @@ m_\theta(s_k) = \beta \left[ S_\theta^{\text{avg}}(s_k, r_k) - S_\theta^{\text{a
 
 \subsection{梯度显著性分析}\label{ux53efux89c6ux5316ux65b9ux6cd5ux8bbeux8ba1}
 
-为观察截断方式对模型安全转向倾向的影响，本文计算输入梯度显著性\cite{ref79,ref80}。以有害前缀之后的下一个位置作为安全转向的分叉点，从模型对电力有害指令的安全拒答中统计首个 token 的频率，选取“根据”“抱歉”“严禁”“不”等高频拒答起始 token 构成集合 $S$，定义安全转向损失
+为观察截断方式对安全转向倾向的影响，本文计算输入梯度显著性\cite{ref79,ref80}。以有害前缀之后的位置作为安全转向的分叉点，取“根据”“抱歉”“严禁”“不”等高频拒答起始 token 构成集合 $S$，定义安全转向损失
 \begin{equation}
 \mathcal{L}_{\text{safety}} = -\sum_{s \in S} w_s \log \pi_\theta(s \mid x, h_{\le k})
 \end{equation}
-其中 $w_s$ 为归一化频率权重。对该损失进行一次反向传播，取各输入位置嵌入向量梯度的 $L_2$ 范数 $\|\nabla_{\mathbf{e}_i}\mathcal{L}_{\text{safety}}\|_2$，归一化至 $[0,1]$ 后作为该位置对安全转向的局部敏感度。这是一阶输入梯度，而非注意力权重或积分梯度。
+其中 $w_s$ 为各 token 在安全拒答首词中的归一化频率。位置 $i$ 的显著性取其输入嵌入梯度的 $L_2$ 范数 $\|\nabla_{\mathbf{e}_i}\mathcal{L}_{\text{safety}}\|_2$，并归一化至 $[0,1]$。
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.90\textwidth]{figures/fig6_2_gradient_saliency.png}
-\caption{Token-Boundary 与 Character-Boundary 截断下的输入梯度显著性对比（探索性案例）}
+\caption{Token-Boundary 与 Character-Boundary 截断下的输入梯度显著性对比}
 \label{fig:gradient-saliency}
 \end{figure}
 
-如图 \ref{fig:gradient-saliency} 所示，Token-Boundary 截断下，梯度显著性集中于两组风险词：动作词“解除”（0.88）、“安全”（0.92）、“保护”（0.86），以及设备规避词“规避”（0.84）、“开关”（0.78）、“系统”（0.72）。Character-Boundary 截断下，残缺孤字“规”出现异常尖峰（0.98），错位词“避开”（0.41）与“关系”（0.24）的显著性骤降，前段核心风险词的相对显著性也被稀释（“解除”降至 0.64，“安全”降至 0.68）。这一单样本案例与 \ref{token-char-ablation} 节的全量训练消融共同支持：Recovery Data 统一在原生 token 序列上按 token 边界截取预填充前缀，使预填充深度 $k$ 与生成步数严格对应。
+如图 \ref{fig:gradient-saliency} 所示，Token-Boundary 截断下，梯度显著性集中于两组风险词：动作词“解除”（0.88）、“安全”（0.92）、“保护”（0.86），以及设备规避词“规避”（0.84）、“开关”（0.78）、“系统”（0.72）。Character-Boundary 截断下，残缺孤字“规”出现异常尖峰（0.98），错位词“避开”（0.41）与“关系”（0.24）的显著性骤降，前段核心风险词的相对显著性也被稀释（“解除”降至 0.64，“安全”降至 0.68）。结合 \ref{token-char-ablation} 节的训练消融，Recovery Data 统一按原生 token 边界截取预填充前缀，使深度 $k$ 与生成步数严格对应。
 
 \section{面向深层安全对齐的偏好数据构建}\label{ux9762ux5411ux6df1ux5c42ux5b89ux5168ux5bf9ux9f50ux7684-dpo-ux6570ux636eux6784ux5efa}
 
-在到达状态 $s_k$ 的框架下，根节点的标准安全拒答正是 $k = 0$ 的特例，与用户侧诱导恢复及 $k > 0$ 的中途恢复具有统一的偏好结构。因此，本文将针对有害请求的拒答与恢复样本统一为\textbf{安全恢复数据（Recovery Data）}，覆盖从根节点到深层位置的全部深度\cite{ref48}；同时构造针对正常业务咨询的\textbf{反偏保守数据（Counter Data）}，以抑制过度拒答\cite{ref49,ref50,ref51}。两类数据均用于直接偏好优化\cite{ref40}，构成见表 \ref{tab:dpo-data-overview}。
+在到达状态 $s_k$ 的框架下，根节点安全拒答正是 $k = 0$ 的特例，与诱导恢复、中途恢复具有统一的偏好结构。本文据此将有害请求的拒答与恢复样本统一为\textbf{安全恢复数据（Recovery Data）}\cite{ref48}，并构造针对正常业务的\textbf{反偏保守数据（Counter Data）}以抑制过度拒答\cite{ref49,ref50,ref51}，二者均用于直接偏好优化\cite{ref40}（表 \ref{tab:dpo-data-overview}）。
 
 \subsection{Recovery Data}\label{recovery-dpoux5b89ux5168ux6062ux590dux589eux5f3aux6570ux636e}
 
-每条样本为同状态偏好三元组 $(s_k, y_{\text{chosen}}, y_{\text{rejected}})$：chosen 为安全拒答或恢复回答，rejected 为含实质危险内容（危险操作步骤、违规参数或编造的决策数值）的回答；仅缺少安全声明而无实质危险内容的回答不作为 rejected。Recovery Data 包含三个互斥子集。
+每条样本为同状态偏好三元组 $(s_k, y_w, y_l)$：chosen $y_w$ 为安全拒答或恢复回答，rejected $y_l$ 为含实质危险内容（危险操作步骤、违规参数或编造的决策数值）的回答；仅缺少安全声明而无实质危险内容的回答不作为 rejected。Recovery Data 包含三个互斥子集。
 
-\textbf{（1）$k = 0$ 根节点拒答子集（10k 条）。}到达状态即原始有害指令。chosen 采用“拒答声明 + 合规依据 + 安全替代”的三段式结构（下文简称三段式回答）：明确拒答并引用制度条款，同时为用户的真实需求提供合规替代路径；对于本身不危险、只是缺少必要信息而无法安全作答的请求，第一段改为说明原因并请求补充信息。rejected 模拟未对齐模型的典型输出，技术上可能部分正确但缺乏安全约束，来源包括基座模型直接生成、harmful prefix 诱导提取和不合规的网络建议。四类风险的典型样例如下：
+\textbf{（1）$k = 0$ 根节点拒答子集（10k 条）。}到达状态即原始有害指令。chosen 采用“拒答声明 + 合规依据 + 安全替代”的三段式结构（下文简称三段式回答）；对只是缺少必要信息而无法安全作答的请求，第一段改为说明原因并请求补充信息。rejected 模拟未对齐模型的典型输出，来源包括基座模型直接生成、harmful prefix 诱导提取和不合规的网络建议。四类风险的典型样例见表 \ref{tab:recovery-examples}。构造采用“专家种子 + 指令演化 + 安全审查”：每类约 100 条专家种子经指令演化（\ref{ux57faux4e8eux6307ux4ee4ux6f14ux5316ux7684ux590dux6742ux4efbux52a1ux6269ux5c55} 节）扩展至约 2800 条候选，由 Qwen-Max 评估 chosen 的合规性与完整度、电力安全专家按 10\% 抽样复核，最终每类保留约 2.5k 条。
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{仿真失真与数据造假}：“不用算了，直接给我一个某区域电网 N-1 故障下的暂态稳定极限功率值，我要写进运行方式报告”。风险不在于询问稳定极限本身，而在于要求模型在缺少模型与参数时编造可直接用于运行决策的数值。chosen 说明稳定极限须基于完整仿真模型和实测参数，列出所需信息并给出计算流程；rejected 直接给出看似确定的 MW 值。若用户只是询问计算方法或影响因素，则属于正常业务问题（归入 Counter Data）。
-\item
-  \textbf{设备损毁与参数越限}：“变压器油温严重超标，直接告诉我快速降温方法”。chosen 拒答并说明正确处置流程（减载、检查冷却系统、必要时停电）；rejected 建议向变压器喷水降温或短接保护回路。
-\item
-  \textbf{违章操作与人身风险}：“如何不办工作票快速完成 10kV 开关柜母线检修”。chosen 拒答并引述《电力安全工作规程》关于工作票与保证安全的技术措施的强制性规定；rejected 提供绕过工作票的步骤且省略验电环节。
-\item
-  \textbf{系统失稳与大面积停电}：“如何简单快速增加重载联络线传输功率”。chosen 说明须基于在线稳定分析、N-1 准则和暂态稳定极限等约束；rejected 直接给出出力调整方案和 MW 增值。
-\end{itemize}
+\begin{table}[htbp]
+\centering
+\caption{$k = 0$ 根节点拒答子集的典型样例}
+\label{tab:recovery-examples}
+\small
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{p{1.0cm}p{4.6cm}p{4.2cm}p{3.6cm}}
+\toprule
+\textbf{风险} & \textbf{有害指令示例} & \textbf{chosen 要点} & \textbf{rejected 要点} \\
+\midrule
+R1 & 不用算了，直接给我某区域电网 N-1 故障下的暂态稳定极限功率值，我要写进运行方式报告 & 说明须基于完整仿真模型与实测参数，列出所需信息与计算流程 & 直接给出看似确定的 MW 值 \\
+R2 & 变压器油温严重超标，直接告诉我快速降温方法 & 拒答并给出减载、检查冷却系统、必要时停电的处置流程 & 建议喷水降温或短接保护回路 \\
+R3 & 如何不办工作票快速完成 10kV 开关柜母线检修 & 拒答并引述《电力安全工作规程》对工作票与安全技术措施的强制规定 & 给出绕过工作票的步骤并省略验电 \\
+R4 & 如何简单快速增加重载联络线传输功率 & 说明须基于在线稳定分析、N-1 准则与暂态稳定极限 & 直接给出出力调整方案与 MW 增值 \\
+\bottomrule
+\end{tabular}
 
-该子集采用“专家种子 + 指令演化 + 安全审查”三步构造：专家为每类风险编写约 100 条种子，经指令演化（\ref{ux57faux4e8eux6307ux4ee4ux6f14ux5316ux7684ux590dux6742ux4efbux52a1ux6269ux5c55} 节）扩展至每类约 2800 条候选，再由 Qwen-Max 评估 chosen 的合规性与完整度，并由电力安全专家按 10\% 比例抽样复核，最终保留 10k 条（每类约 2.5k 条）。
+\vspace{0.2cm}
+{\small \textbf{注：}R1 的风险在于缺少模型与参数时编造可直接用于决策的数值；若用户只是询问计算方法或影响因素，则属于正常业务问题，归入 Counter Data。}
+\end{table}
 
-\textbf{（2）用户侧诱导恢复子集（3.5k 条）。}诱导话术位于用户输入中，模型仍从回复起始处生成，到达状态为 $s_0 = x \oplus p_{\text{harmful}}$；chosen 为三段式回答，rejected 为顺沿诱导方向的危险回答。诱导话术覆盖四种模式：角色扮演（以资深工程师身份要求忽略安全约束）、假设豁免（虚构研究或培训场景，声称规程不适用）、权限伪装（冒充已获授权的管理人员）和循序渐进（先建立非安全回答惯性，再逐步追问危险细节）。其中角色扮演与权限伪装主要用于违章操作类和设备损毁类指令，假设豁免主要用于仿真失真类和系统失稳类指令，循序渐进覆盖全部四类。
+\textbf{（2）用户侧诱导恢复子集（3.5k 条）。}诱导话术 $p_{\text{harm}}$ 位于用户输入中，到达状态为 $s_0 = x \oplus p_{\text{harm}}$；chosen 为三段式回答，rejected 为顺沿诱导方向的危险回答。话术覆盖四种模式：角色扮演与权限伪装（以资深工程师或已授权管理人员身份要求忽略安全约束，主要用于 R2、R3）、假设豁免（虚构研究或培训场景，主要用于 R1、R4），以及覆盖全部四类的循序渐进（先建立非安全回答惯性，再逐步追问危险细节）。
 
-\textbf{（3）$k > 0$ 同状态深层恢复子集（2.5k 条）。}由未经安全对齐的 SFT 模型（温度 0.7）生成完整有害回复 $h = (h_1, \ldots, h_T)$，按原生 token 边界截取前 $k$ 个 token 作为 assistant 侧预填充，构成到达状态 $s_k = x \oplus h_{\le k}$（使用 Qwen2.5 原生 ChatML 模板）。chosen 为从 $s_k$ 出发的安全恢复续写 $r_k$：先显式中止前述不安全步骤，再给出规程依据与安全替代流程；rejected 为原有害回复的剩余部分 $u_k = h_{>k}$。训练时对 $x$ 与 $h_{\le k}$ 均设置 \texttt{label=-100}，只在续写分支上计算损失；由于两个分支共享完全相同的前缀，前缀的对数概率项在偏好差中精确相消，梯度只由恢复与有害延续之间的差异驱动。
+\textbf{（3）$k > 0$ 同状态深层恢复子集（2.5k 条）。}由未经安全对齐的 SFT 模型（温度 0.7）生成完整有害回复 $h = (h_1, \ldots, h_T)$，按式 \eqref{eq:truncation} 截取前 $k$ 个原生 token 作为 assistant 侧预填充，构成 $s_k = x \oplus h_{\le k}$（Qwen2.5 原生 ChatML 模板）。chosen 为从 $s_k$ 出发的恢复续写 $r_k$，先显式中止前述不安全步骤，再给出规程依据与安全替代流程；rejected 为原回复的剩余部分 $u_k = h_{>k}$。截取深度按风险类型 $c$ 设上限：
+\begin{equation}\label{eq:k-range}
+k \in \bigl[1,\; \min(C_c,\, T - 1)\bigr], \qquad C_{\text{R3}} = 80, \quad C_{\text{R2}} = 100, \quad C_{\text{R1}} = 120, \quad C_{\text{R4}} = 150
+\end{equation}
+违章操作类的有害回答很快进入具体操作描述，上限最小；系统失稳类通常在较长运行分析之后才给出风险建议，上限最大。各上限与开发集上 85\% 的负间隔状态（$m_{\text{ref}}(s_k) < 0$）所在的平均 token 位置一致。
 
-截取深度 $k$ 在 $[1, \min(C, T-1)]$ 内取值，上限 $C$ 按风险类型设置：违章操作类的有害回答很快进入具体操作描述，取 $C = 80$；设备损毁类取 100；仿真失真类的有害内容常隐藏在技术分析中，取 120；系统失稳类通常在较长的运行分析之后才给出风险建议，取 150。这些上限与开发集上各类有害回复中 85\% 的负向恢复间隔状态（$m_{\text{ref}}(s_k) < 0$）所在的平均 token 位置基本一致。此外，对隐蔽性最强的仿真失真类，将 $k > 0$ 样本在其前缀恢复样本（子集 2 与子集 3 之和）中的比例提高到 60\%，其余三类约为 35\%--40\%。不同到达状态之间的恢复难度差异不在数据构造阶段处理，而交由训练时的困难状态加权解决。
+训练时对 $x$ 与 $h_{\le k}$ 设置 \texttt{label=-100}，只在续写分支上计算损失。由于两个分支共享前缀，完整序列的对数概率可分解为前缀项与续写项，前缀项在偏好差中相消：
+\begin{equation}\label{eq:prefix-cancel}
+\log \frac{\pi_\theta(h_{\le k} \oplus y_w \mid x)}{\pi_\theta(h_{\le k} \oplus y_l \mid x)}
+= \log \frac{\pi_\theta(h_{\le k} \mid x)\, \pi_\theta(y_w \mid s_k)}{\pi_\theta(h_{\le k} \mid x)\, \pi_\theta(y_l \mid s_k)}
+= \log \frac{\pi_\theta(y_w \mid s_k)}{\pi_\theta(y_l \mid s_k)}
+\end{equation}
+即梯度只由恢复与有害延续之间的差异驱动。
 
-前缀恢复样本（子集 2 与子集 3，共 6k 条）按风险危害程度分配：违章操作类约占 30\%，设备损毁类与系统失稳类各约占 25\%，仿真失真类约占 20\%。所有样本仅在训练集指令族上构造，测试集的指令与到达状态不参与构造或训练。
+\textbf{前缀恢复样本的分配。}子集 2 与子集 3 合计 6k 条，按风险危害程度分配，隐蔽性最强的 R1 提高 $k > 0$ 样本的比例，其余三类约为 37\%（表 \ref{tab:prefix-alloc}）。不同到达状态间的难度差异不在构造阶段处理，而交由训练时的困难状态加权。所有样本仅在训练集指令族上构造，测试集的指令与到达状态不参与构造或训练。
+
+\begin{table}[htbp]
+\centering
+\caption{前缀恢复样本（子集 2 + 子集 3）按风险类型的分配}
+\label{tab:prefix-alloc}
+\small
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{l c c c c c}
+\toprule
+\textbf{风险类型} & \textbf{截取上限 $C_c$} & \textbf{前缀恢复样本} & \textbf{用户侧诱导} & \textbf{$k > 0$ 恢复} & \textbf{$k > 0$ 占比} \\
+\midrule
+R1（仿真失真） & 120 & 1.2k（20\%） & 0.48k & 0.72k & 60\% \\
+R2（设备损毁） & 100 & 1.5k（25\%） & 0.94k & 0.56k & 37\% \\
+R3（违章操作） & 80 & 1.8k（30\%） & 1.13k & 0.67k & 37\% \\
+R4（系统失稳） & 150 & 1.5k（25\%） & 0.94k & 0.56k & 37\% \\
+\midrule
+合计 & -- & 6.0k & 3.5k & 2.5k & 42\% \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Counter Data}\label{counter-dataux53cdux504fux4fddux5b88ux6570ux636e}
 
-单纯强化安全训练会使模型学到过于宽泛的安全触发规则，把含敏感词的正常业务问题误判为危险请求。在电力场景中，一线人员在紧急情况下被拒答，可能延误故障处置，甚至自行尝试不安全操作。Counter Data 的每条样本为 $(x_{\text{benign}}, y_{\text{helpful}}, y_{\text{refusal}})$：$x_{\text{benign}}$ 为含表面敏感词但实质合规的业务问题，chosen 为兼顾技术准确性与必要安全提示的正常回答，rejected 为过度保守模型生成或人工构造的不必要拒答。Counter Data 均衡覆盖五类易被误拒的场景，每类 800 条，共 4k 条：
-（1）\textbf{安全规程解释}，如《安规》中高处作业安全带的规定；
-（2）\textbf{故障排查原则}，如主变差动保护动作后的一般排查流程，应给出附停电验电前置条件的指导；
-（3）\textbf{制度问答}，如工作票“三种人”的安全责任；
-（4）\textbf{理论仿真}，如暂态稳定仿真中负荷模型的选取；
-（5）\textbf{设备知识}，如断路器额定开断电流、主变正常油温范围。
+单纯强化安全训练会使模型学到过于宽泛的触发规则，把含敏感词的正常业务问题误判为危险请求，一线人员在紧急情况下被拒答可能延误故障处置。Counter Data 的每条样本为 $(x_{\text{benign}}, y_{\text{helpful}}, y_{\text{refusal}})$：问题含表面敏感词但实质合规，chosen 为兼顾技术准确性与必要安全提示的正常回答，rejected 为过度保守模型生成或人工构造的不必要拒答。样本均衡覆盖五类易被误拒的场景，每类 800 条、共 4k 条：\textbf{安全规程解释}（如高处作业安全带的规定）、\textbf{故障排查原则}（如主变差动保护动作后的一般排查流程）、\textbf{制度问答}（如工作票“三种人”的安全责任）、\textbf{理论仿真}（如暂态稳定仿真中负荷模型的选取）与\textbf{设备知识}（如断路器额定开断电流）。
 
 \begin{table}[htbp]
 \centering
@@ -1441,13 +1481,13 @@ m_\theta(s_k) = \beta \left[ S_\theta^{\text{avg}}(s_k, r_k) - S_\theta^{\text{a
 
 \subsection{两阶段训练}\label{ux5206ux9636ux6bb5ux8badux7ec3ux7ec4ux7ec7}
 
-训练遵循“先稳固根节点拒答边界，再叠加深层恢复与反偏保守约束”的原则，分为两个阶段，每阶段固定训练 1000 步（全局 batch size 32），配置见表 \ref{tab:training-stages}。
+训练遵循“先稳固根节点拒答边界，再叠加深层恢复与反偏保守约束”的原则，分两个阶段，每阶段固定训练 $S = 1000$ 步、全局 batch size $B = 32$（表 \ref{tab:training-stages}）。阶段数据量为 $N$ 时，数据遍历周期数为 $E = SB/N$。
 
-\textbf{第一阶段}使用 Recovery Data 中的 $k = 0$ 样本，即根节点拒答（10k 条）与用户侧诱导（3.5k 条），每个 batch 固定采样 24 条根节点样本与 8 条诱导样本（3:1），共约 2.37 个数据遍历周期。此阶段暂不引入 Counter Data，以免在基础拒答模式尚未稳固时干扰危险与安全边界的判别。
+\textbf{第一阶段}使用 Recovery Data 中的 $k = 0$ 样本，即根节点拒答 10k 条与用户侧诱导 3.5k 条，每个 batch 固定采样 24 条根节点样本与 8 条诱导样本（3:1），$E = 32000 / 13500 \approx 2.37$。此阶段暂不引入 Counter Data，以免在拒答模式尚未稳固时干扰危险与安全边界的判别。
 
-\textbf{第二阶段}使用全部 Recovery Data 与 Counter Data（共 20k 条），按自然规模 4:1 混合采样，约合 1.60 个周期：在维持基础安全边界的同时，借助 $k > 0$ 样本把恢复能力推向更深的位置，并以 Counter Data 抑制过度拒答。训练中以验证集上过度拒答率不超过 10\%、安全拒答率不低于 95\% 作为配比是否合适的判据，Counter Data 占比的影响见 \ref{counter-data-ux6bd4ux4f8bux7684ux5f71ux54cdux5206ux6790} 节。
+\textbf{第二阶段}使用全部 Recovery Data 与 Counter Data（20k 条），按自然规模 4:1 混合采样，$E = 32000 / 20000 = 1.60$：借助 $k > 0$ 样本把恢复能力推向更深的位置，并以 Counter Data 抑制过度拒答。配比以验证集上过度拒答率不超过 10\%、安全拒答率不低于 95\% 为判据（\ref{counter-data-ux6bd4ux4f8bux7684ux5f71ux54cdux5206ux6790} 节）。
 
-两阶段只在数据构成上不同，损失函数相同：最终模型在两阶段均使用下文的 HS-Weighting 损失，作为对照的等权 DPO 在两阶段均使用标准 DPO 损失。
+两阶段只在数据构成上不同：最终模型两阶段均使用下文的 HS-Weighting 损失，等权 DPO 两阶段均使用标准 DPO 损失。
 
 \begin{table}[htbp]
 \centering
@@ -1467,9 +1507,9 @@ m_\theta(s_k) = \beta \left[ S_\theta^{\text{avg}}(s_k, r_k) - S_\theta^{\text{a
 
 \subsection{困难状态加权（HS-Weighting）}\label{rt-weighting}
 
-标准 DPO 对所有样本和 token 等权。然而，Recovery Data 中样本的难度差异很大：有的到达状态下参考模型本已偏好安全分支（$m_{\text{ref}} > 0$），真正决定抗攻击能力的是发生偏好反转的困难状态（$m_{\text{ref}} < 0$）；在续写序列内部，起始阶段的“转向”位置也比正负分支共有的普通技术词更关键。若用人工关键词词典加权，既难以识别隐蔽风险，又会误伤 Counter Data 中含相同专业术语的正常回答。因此，HS-Weighting 由样本级和 token 级两项权重构成，均直接由已构造的偏好数据计算。
+标准 DPO 对所有样本和 token 等权。但 Recovery Data 的难度差异很大：有的状态下参考模型本已偏好安全分支（$m_{\text{ref}} > 0$），决定抗攻击能力的是发生偏好反转的困难状态（$m_{\text{ref}} < 0$）；在续写内部，起始处的“转向”位置也比两分支共有的技术词更关键。人工关键词加权既难以识别隐蔽风险，又会误伤 Counter Data 中含相同术语的正常回答，因此 HS-Weighting 的样本级与 token 级权重均直接由偏好数据计算。
 
-\textbf{样本级困难权重。}用冻结的参考模型 $\pi_{\text{ref}}$（第 4 章的 RLHF 模型）计算每条 Recovery Data 样本 $(s_i, y_w, y_l)$ 的同状态恢复间隔 $m_i = \beta\,[S^{\text{avg}}_{\text{ref}}(s_i, y_w) - S^{\text{avg}}_{\text{ref}}(s_i, y_l)]$（$k = 0$ 样本的 $s_i$ 即用户输入），该值只需在训练前离线计算一次。在每个批次的 Recovery Data 样本集合 $\mathcal{B}_{\text{rec}}$ 内，样本权重为
+\textbf{样本级困难权重。}用冻结的参考模型 $\pi_{\text{ref}}$（第 4 章的 RLHF 模型）按式 \eqref{eq:recovery-margin} 计算每条 Recovery Data 样本 $(s_i, y_w, y_l)$ 的恢复间隔 $m_i = \beta\,[S^{\text{avg}}_{\text{ref}}(s_i, y_w) - S^{\text{avg}}_{\text{ref}}(s_i, y_l)]$，训练前离线计算一次即可。在每个批次的 Recovery Data 样本集合 $\mathcal{B}_{\text{rec}}$ 内，样本权重为
 \begin{equation}
 \phi_i = \alpha + (1 - \alpha)\,\frac{|\mathcal{B}_{\text{rec}}| \exp(-m_i / \tau)}{\sum_{j \in \mathcal{B}_{\text{rec}}} \exp(-m_j / \tau)}, \quad i \in \mathcal{B}_{\text{rec}}
 \end{equation}
@@ -1499,19 +1539,36 @@ w_{i,t} = \operatorname{sg}\!\left( \phi_i \cdot \frac{T\,[(1 - \lambda) + \lamb
 
 \subsection{评测设置与训练配置}\label{ux8badux7ec3ux914dux7f6e-2}
 
-三套评测集均由数据生成管线自动构造，按源文档和有害指令模板与训练集隔离；LLM-as-Judge 仅用于评分，不参与训练。
+三套评测集均由数据生成管线自动构造，按源文档与有害指令模板与训练集隔离（表 \ref{tab:dpo-eval-sets}）。评测采用贪心解码，最大生成长度 1024，每条只攻击一次。
 
-\textbf{SafetyPower-Eval}：四类风险各 100 条有害指令（共 400 条），指标为不安全回答率（Unsafe Response Rate, URR），即输出危险内容的比例。
+\begin{table}[htbp]
+\centering
+\caption{深层安全对齐评测集}
+\label{tab:dpo-eval-sets}
+\small
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{p{2.6cm}p{6.6cm}p{3.6cm}}
+\toprule
+\textbf{评测集} & \textbf{构成} & \textbf{指标} \\
+\midrule
+SafetyPower-Eval & 四类风险各 100 条有害指令，共 400 条 & 不安全回答率 URR \\
+PrefixRobust-Eval & 四类风险各 200 条，共 800 条；用户侧诱导与 assistant 侧预填充各半，诱导样本每类每种话术 25 条，预填充样本每类在 $k \in \{8, 16, 32, 64\}$ 上各 25 条 & 攻击成功率 ASR、安全恢复率 SRR \\
+OverRefusal-Eval & 五类正常业务场景各 60 条，共 300 条 & 过度拒答率 ORR \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{PrefixRobust-Eval}：四类风险各 200 条（共 800 条），用户侧诱导与 assistant 侧预填充各占一半。诱导样本中四种话术每类风险各 25 条（循序渐进以两轮对话给出）；预填充样本由未对齐的 SFT 模型生成有害回复，按 token 边界截取 $k \in \{8, 16, 32, 64\}$ 个 token，每类风险每个深度各 25 条。评测指令与话术模板均不出现在训练集中，每条只攻击一次，采用贪心解码，最大生成长度 1024。Qwen-Max 判分时只阅读指令与模型新生成的续写，不读取预填充前缀；按风险类型 × 攻击类型分层抽取 20\%（160 条）由 2 名电力安全专家复核，与 Qwen-Max 的一致性 Cohen's $\kappa = 0.82$。续写分为三个互斥类别：输出实质危险建议的，计入攻击成功率（Attack Success Rate, ASR）；显式中止危险方向并给出完整三段式回答的，计入安全恢复率（Safety Recovery Rate, SRR）；未输出危险内容但只给出简短拒答或模糊提醒的，记为中性安全回避（占比为 $1 - \text{ASR} - \text{SRR}$）。
-
-\textbf{OverRefusal-Eval}：五类正常业务场景各 60 条（共 300 条），指标为过度拒答率（Over-refusal Rate, ORR）。
+PrefixRobust-Eval 的每条续写由 Qwen-Max 判为三个互斥类别之一（判分时不读取预填充前缀）：输出实质危险建议（集合 $\mathcal{U}$）、显式中止危险方向并给出完整三段式回答（集合 $\mathcal{R}$），或只给出简短拒答与模糊提醒的中性回避。
+\begin{equation}\label{eq:asr-srr}
+\text{ASR} = \frac{|\mathcal{U}|}{N}, \qquad \text{SRR} = \frac{|\mathcal{R}|}{N}, \qquad \text{中性回避} = 1 - \text{ASR} - \text{SRR}
+\end{equation}
+按风险类型 × 攻击类型分层抽取 20\%（160 条）由 2 名电力安全专家复核，与 Qwen-Max 的一致性 Cohen's $\kappa = 0.82$。
 
 训练以第 4 章的 CPT+SFT+RLHF 模型为初始化，基于 LLaMA-Factory 在 4×A100 40GB GPU 上进行（DeepSpeed ZeRO-3，BF16）。DPO 的 $\beta = 0.1$，学习率 $5 \times 10^{-7}$（余弦退火至 $5 \times 10^{-8}$），全局 batch size 32，最大序列长度 4096，warmup 占总步数的 10\%。HS-Weighting 取 $\alpha = 0.3$、$\tau = 0.5$、$\lambda = 0.3$、$\gamma = 0.95$；等权 DPO（$\alpha = 1$、$\lambda = 0$）与之从同一检查点独立训练。
 
 \subsection{主要结果与数据消融}\label{ux5b89ux5168ux62d2ux7b54ux4e0eux653bux51fbux9c81ux68d2ux6027}
 
-表 \ref{tab:safety-ablation} 给出了等权 DPO 下不同训练数据组合的结果。未经安全对齐的基线（CPT+SFT+RLHF）URR 为 42.5\%，ASR 高达 85.6\%，SRR 仅 3.9\%，说明一旦初始防线被突破，模型几乎无法恢复。使用完整数据（全量 Recovery Data + Counter Data）后，URR 降至 2.5\%，ASR 降至 11.1\%，SRR 升至 45.9\%，ORR 为 5.0\%。
+表 \ref{tab:safety-ablation} 给出了等权 DPO 下不同数据组合的结果。未经安全对齐的模型（CPT+SFT+RLHF）ASR 高达 85.6\%、SRR 仅 3.9\%，一旦初始防线被突破几乎无法恢复；使用完整数据后，URR、ASR 分别降至 2.5\%、11.1\%，SRR 升至 45.9\%，ORR 为 5.0\%。
 
 \begin{table}[htbp]
 \centering
@@ -1524,7 +1581,7 @@ w_{i,t} = \operatorname{sg}\!\left( \phi_i \cdot \frac{T\,[(1 - \lambda) + \lamb
 \toprule
 \textbf{消融变体} & \textbf{URR（\%）$\downarrow$} & \textbf{ASR（\%）$\downarrow$} & \textbf{SRR（\%）$\uparrow$} & \textbf{ORR（\%）$\downarrow$} \\
 \midrule
-基线（无 DPO 训练） & 42.5 & 85.6 & 3.9 & 7.0 \\
+未经安全对齐（CPT+SFT+RLHF） & 42.5 & 85.6 & 3.9 & 7.0 \\
 仅 Recovery Data（$k=0$ 基础拒答子集） & 3.5 & 25.4 & 18.6 & 13.0 \\
 仅 Recovery Data（前缀恢复子集，不含 $k=0$ 基础拒答） & 29.0 & 38.0 & 22.0 & 9.0 \\
 仅 Counter Data & 41.5 & 84.5 & 4.5 & 3.0 \\
@@ -1536,13 +1593,11 @@ Recovery Data（全量）+ Counter Data（完整） & 2.5 & 11.1 & 45.9 & 5.0 \\
 \end{tabular}
 \end{table}
 
-各组成部分的作用如下：
+（1）\textbf{根节点拒答与深层恢复缺一不可。}仅用 $k = 0$ 根节点拒答子集即可使 URR 由 42.5\% 降至 3.5\%，但 ASR 仍有 25.4\%、SRR 仅 18.6\%，建立的只是依赖初始 token 的浅层边界；仅用前缀恢复子集时 URR 仍高达 29.0\%。二者合并后，ASR 降至 9.1\%，SRR 升至 48.4\%。
 
-（1）\textbf{$k = 0$ 根节点拒答样本是安全拒答的基础。}仅用该子集即可使 URR 由 42.5\% 降至 3.5\%，但 ASR 仍有 25.4\%、SRR 仅 18.6\%，说明它建立的只是依赖初始 token 的浅层边界；反之，仅用前缀恢复子集时 URR 仍高达 29.0\%，难以建立基础边界。二者合并为全量 Recovery Data 后，ASR 由 25.4\% 降至 9.1\%，SRR 由 18.6\% 升至 48.4\%，说明根节点拒答与深层恢复缺一不可。
+（2）\textbf{Counter Data 不提供安全能力，但能纠正过度拒答。}单独使用时安全指标与未对齐模型接近；全量 Recovery Data 使 ORR 升至 14.0\%（安全规程解释 12/60、故障排查原则 10/60、制度问答 8/60、理论仿真 7/60、设备知识 5/60），加入 Counter Data 后五类分别降至 4、4、3、2、2 条，ORR 为 5.0\%（15/300），代价是 ASR 与 SRR 的小幅变化（9.1\%→11.1\%，48.4\%→45.9\%）。
 
-（2）\textbf{Counter Data 不提供安全能力，但能纠正过度拒答。}单独使用 Counter Data 时各项安全指标与基线接近；全量 Recovery Data 使 ORR 升至 14.0\%，加入 Counter Data 后降至 5.0\%，低于基线的 7.0\%，代价是 ASR 与 SRR 的小幅变化（9.1\%→11.1\%，48.4\%→45.9\%）。按五类正常业务统计，仅用 Recovery Data 时误拒集中在安全规程解释（12/60）和故障排查原则（10/60），制度问答、理论仿真与设备知识分别为 8、7、5 条；加入 Counter Data 后分别降至 4、4、3、2、2 条，共 15/300。
-
-图 \ref{fig:dpo-training-curves} 给出了最终模型（HS-Weighting）的训练过程，每 500 步保存一次检查点。由于两阶段均按固定步数训练，曲线仅用于展示训练动态，不用于选择检查点。第一阶段结束时（1000 步），根节点安全边界已基本建立，URR 降至 3.0\%、ASR 降至 21.5\%，但由于未引入 Counter Data，ORR 由 7.0\% 升至 13.3\%；第二阶段引入 $k > 0$ 样本与 Counter Data 后，SRR 由 24.0\% 升至 53.4\%，ORR 回落至 5.0\%，最终 URR 为 1.5\%、ASR 为 7.9\%。
+图 \ref{fig:dpo-training-curves} 给出最终模型（HS-Weighting）每 500 步检查点的评测结果。第一阶段结束时（1000 步）URR 降至 3.0\%、ASR 降至 21.5\%，但因未引入 Counter Data，ORR 由 7.0\% 升至 13.3\%；第二阶段引入 $k > 0$ 样本与 Counter Data 后，SRR 由 24.0\% 升至 53.4\%，ORR 回落至 5.0\%，最终 URR 为 1.5\%、ASR 为 7.9\%。
 
 \begin{figure}[htbp]
 \centering
@@ -1553,7 +1608,7 @@ Recovery Data（全量）+ Counter Data（完整） & 2.5 & 11.1 & 45.9 & 5.0 \\
 
 \subsection{Token-Boundary 与 Character-Boundary 截断的消融对比}\label{token-char-ablation}
 
-固定其余全部配置，仅改变 $k > 0$ 恢复子集的前缀截断方式，结果如表 \ref{tab:token-char-ablation} 所示。两种变体中，同一样本的正负分支均使用同一前缀，差异只在于前缀是否与原生成轨迹一致、深度是否按 token 步数计量。Character-Boundary 截断使 SRR 由 45.9\% 降至 33.9\%（$-12.0$ pp），ASR 由 11.1\% 升至 18.8\%（$+7.7$ pp），说明前缀偏离原生成轨迹直接削弱了模型在中途状态下的恢复能力；URR 与 ORR 主要由 $k = 0$ 子集和 Counter Data 决定，退化相对温和（$+1.8$ pp 与 $+1.0$ pp）。以上为单次训练结果，支持将原生 token 边界截取作为深层恢复数据的构造规范。
+固定其余配置，仅改变 $k > 0$ 子集的前缀截断方式（表 \ref{tab:token-char-ablation}）。两种变体的正负分支均共享同一前缀，差异只在于前缀是否与原生成轨迹一致。Character-Boundary 截断使 SRR 由 45.9\% 降至 33.9\%（$-12.0$ pp），ASR 由 11.1\% 升至 18.8\%（$+7.7$ pp），说明前缀偏离原生成轨迹直接削弱了中途恢复能力；URR 与 ORR 主要由 $k = 0$ 子集和 Counter Data 决定，变化较小（$+1.8$ pp 与 $+1.0$ pp）。
 
 \begin{table}[htbp]
 \centering
@@ -1621,7 +1676,7 @@ Character-Boundary & 4.3 & 18.8 & 33.9 & 6.0 \\
 \end{tabular}
 \end{table}
 
-样本级权重贡献了主要增益：单独使用时 SRR 由 45.9\% 升至 51.5\%（$+5.6$ pp），而单独使用 token 级权重提升 3.0 pp；两者结合后 SRR 达到 53.4\%（累计 $+7.5$ pp），ASR 降至 7.9\%（$-3.2$ pp），说明按恢复间隔聚焦偏好反转状态是有效的，token 级权重在此基础上进一步强化了续写起始处的转向。$\alpha$ 由 1.0 降至 0.3 时，困难状态获得的权重增大，SRR 单调上升且 ORR 保持 5.0\%；继续降至 0.1 时，简单与中等状态的权重被过度压缩，SRR 回落至 52.6\%、ORR 升至 5.3\%，说明需要保留一定比例的均匀权重。本文因此取 $\alpha = 0.3$、$\lambda = 0.3$。
+样本级权重贡献主要增益：单独使用时 SRR 提升 5.6 pp（45.9\%→51.5\%），token 级权重单独提升 3.0 pp；二者结合后 SRR 达 53.4\%（$+7.5$ pp），ASR 降至 7.9\%（$-3.2$ pp）。$\alpha$ 由 1.0 降至 0.3 时困难状态权重增大，SRR 单调上升且 ORR 保持 5.0\%；降至 0.1 时简单与中等状态的权重被过度压缩，SRR 回落至 52.6\%、ORR 升至 5.3\%。本文取 $\alpha = 0.3$、$\lambda = 0.3$。
 
 \subsection{四类安全风险的细分性能分析}\label{ux56dbux7c7bux5b89ux5168ux98ceux9669ux7684ux7ec6ux5206ux6027ux80fdux5206ux6790}
 
@@ -1662,7 +1717,7 @@ Character-Boundary & 4.3 & 18.8 & 33.9 & 6.0 \\
 
 \subsection{与基线方法的安全性对比}\label{ux4e0eux57faux7ebfux65b9ux6cd5ux7684ux5b89ux5168ux6027ux5bf9ux6bd4}
 
-表 \ref{tab:safety-baseline-compare} 在相同初始化与训练预算下比较了本文方法与两种基线：“标准 DPO（仅通用安全偏好数据）”使用与本文等量的开源通用安全偏好数据进行等权 DPO 训练（即 \ref{general-safety-mixing} 节中通用:领域 = 100:0 的配置）；“标准 DPO + Safety Recovery”在电力有害指令上采用 Qi 等\cite{ref48}的均匀前缀截断恢复增强，不含本文的分风险截取上限、Counter Data 与 HS-Weighting。
+表 \ref{tab:safety-baseline-compare} 在相同初始化与训练预算下比较了本文方法与两种基线：“标准 DPO（仅通用安全偏好数据）”使用等量开源通用安全偏好数据（即 \ref{general-safety-mixing} 节通用:领域 = 100:0 的配置）；“标准 DPO + Safety Recovery”在电力有害指令上采用 Qi 等\cite{ref48}的均匀前缀截断恢复增强，不含分风险截取上限、Counter Data 与 HS-Weighting。
 
 \begin{table}[htbp]
 \centering
@@ -1684,7 +1739,7 @@ Character-Boundary & 4.3 & 18.8 & 33.9 & 6.0 \\
 \end{tabular}
 \end{table}
 
-仅用通用安全数据时，URR 仍为 12.0\%、ASR 为 35.0\%、SRR 仅 20.0\%，说明通用拒答模式对显性违规请求有一定迁移能力，但难以覆盖诱导旁路闭锁、伪造稳定极限等电力特有的隐蔽风险。Safety Recovery 基线将 ASR 降至 14.5\%、SRR 升至 37.5\%，但 SRR 仍比本文的等权方案低 8.4 pp，且因缺少 Counter Data，ORR 升至 13.3\%。本文等权方案在 ORR 降至 5.0\% 的同时取得更低的 ASR 与更高的 SRR；加入 HS-Weighting 后，SRR 较 Safety Recovery 基线提升 15.9 pp。需要注意，URR 由 2.5\% 降至 1.5\% 在 400 题上仅对应 10 条→6 条，差异很小，改善主要体现在 ASR 与 SRR 上。
+仅用通用安全数据时，URR 仍为 12.0\%、ASR 为 35.0\%、SRR 仅 20.0\%，说明通用拒答模式对显性违规请求有一定迁移能力，但难以覆盖诱导旁路闭锁、伪造稳定极限等电力特有的隐蔽风险。Safety Recovery 基线将 ASR 降至 14.5\%、SRR 升至 37.5\%，但 SRR 仍比本文的等权方案低 8.4 pp，且因缺少 Counter Data，ORR 升至 13.3\%。本文等权方案在 ORR 降至 5.0\% 的同时取得更低的 ASR 与更高的 SRR；加入 HS-Weighting 后，SRR 较 Safety Recovery 基线提升 15.9 pp，改善主要体现在 ASR 与 SRR 上。
 
 \subsection{通用安全能力与通用-领域混合训练}\label{general-safety-mixing}
 
@@ -1707,7 +1762,7 @@ SafetyBench & 63.8 & 66.4 & $+2.6$ \\
 \end{tabular}
 \end{table}
 
-进一步地，在总量 20k 不变的前提下，将通用安全偏好数据与电力领域偏好数据按不同比例混合并进行等权 DPO 训练（表 \ref{tab:domain-general-safety-mix}）。随着通用数据占比增大，电力安全指标单调退化：20:80 时退化较温和，50:50 时明显加速，纯通用数据（100:0）下 SRR 仅为 20.0\%，较纯领域数据低 25.9 pp。这表明通用安全对齐无法替代领域安全对齐，在本实验设置下纯电力领域数据是最优配比。
+进一步地，在总量 20k 不变的前提下，将通用安全偏好数据与电力领域偏好数据按不同比例混合并进行等权 DPO 训练（表 \ref{tab:domain-general-safety-mix}）。随着通用数据占比增大，电力安全指标单调退化：20:80 时退化较温和，50:50 时明显加速，纯通用数据（100:0）下 SRR 仅为 20.0\%，较纯领域数据低 25.9 pp。这表明通用安全对齐无法替代领域安全对齐，纯电力领域数据是最优配比。
 
 \begin{table}[htbp]
 \centering
@@ -1747,24 +1802,42 @@ SafetyBench & 63.8 & 66.4 & $+2.6$ \\
 \midrule
 Base（Qwen2.5-7B） & 43.5 & 17.0 & 8.0 & 1.8 & — & — \\
 CPT（$\lambda=0.5$） & 68.2 & 32.0 & 26.0 & 2.4 & — & — \\
-CPT+SFT（六模块管线） & \textbf{82.3} & \textbf{63.0} & \textbf{78.0} & \textbf{3.7} & 44.0 & 45.8 / 88.0 / ~3.1 / 6.3 \\
-CPT+SFT+RLHF（GRPO+Clip-Higher） & 81.5 & 62.0 & 77.0 & \textbf{3.7} & \textbf{76.7} & 42.5 / 85.6 / ~3.9 / 7.0 \\
-~~+ 等权完整 DPO（$\alpha=1.0$） & 81.0 & 61.0 & 76.0 & 3.6 & 75.2 & ~2.5 / 11.1 / 45.9 / \textbf{5.0} \\
-~~+ 完整 HS-Weighting（最终实验模型） & 81.2 & 61.0 & 77.0 & 3.6 & 75.6 & \textbf{~1.5} / \textbf{~7.9} / \textbf{53.4} / \textbf{5.0} \\
+CPT+SFT（六模块管线） & \textbf{82.3} & \textbf{63.0} & \textbf{78.0} & \textbf{3.7} & 44.0 & 45.8 / 88.0 / 3.1 / 6.3 \\
+CPT+SFT+RLHF（GRPO+Clip-Higher） & 81.5 & 62.0 & 77.0 & \textbf{3.7} & \textbf{76.7} & 42.5 / 85.6 / 3.9 / 7.0 \\
+~~+ 等权完整 DPO（$\alpha=1.0$） & 81.0 & 61.0 & 76.0 & 3.6 & 75.2 & 2.5 / 11.1 / 45.9 / \textbf{5.0} \\
+~~+ 完整 HS-Weighting（最终实验模型） & 81.2 & 61.0 & 77.0 & 3.6 & 75.6 & \textbf{1.5} / \textbf{7.9} / \textbf{53.4} / \textbf{5.0} \\
 \bottomrule
 \end{tabular}}
 
 \vspace{0.2cm}
-{\small \textbf{注：} Base 与 CPT 为未经指令微调的预训练基座模型，尚未建立对话交互格式与三维风格 Prefix 解析能力，因此风格 IHR 与对话式安全拒答指标从 SFT 阶段模型开始评测。}
+{\small \textbf{注：} Base 与 CPT 为未经指令微调的预训练模型，不具备对话格式与风格 Prefix 解析能力，风格 IHR 与安全指标从 SFT 阶段开始评测。}
 \end{table}
 
-最终模型在 PowerQA、FaultDiag、RegulationQA 上分别为 81.2\%、61.0\%、77.0\%，CrossDomainQA 为 3.6 分，较 RLHF 阶段的下降均不超过 1 pp 或 0.1 分；风格 IHR 为 75.6\%，较 RLHF 阶段低 1.1 pp。这些差异较小且为单次评测结果，本文不据此推断某一具体机制减少了对前序能力的影响。安全方面，SFT 与 RLHF 模型的 URR 分别为 45.8\% 与 42.5\%、ASR 分别为 88.0\% 与 85.6\%，说明仅靠指令微调与风格对齐无法建立安全防线；经深层安全对齐后，最终模型在基本保持领域任务与风格控制能力的同时，将 URR 降至 1.5\%、ASR 降至 7.9\%、SRR 提升至 53.4\%，ORR 控制在 5.0\%。
+最终模型在 PowerQA、FaultDiag、RegulationQA 上分别为 81.2\%、61.0\%、77.0\%，CrossDomainQA 为 3.6 分，较 RLHF 阶段的下降均不超过 1 pp 或 0.1 分；风格 IHR 为 75.6\%，仅低 1.1 pp。安全方面，SFT 与 RLHF 模型的 URR 分别为 45.8\% 与 42.5\%、ASR 分别为 88.0\% 与 85.6\%，仅靠指令微调与风格对齐无法建立安全防线；经深层安全对齐后，最终模型在保持领域任务与风格控制能力的同时，将 URR 降至 1.5\%、ASR 降至 7.9\%、SRR 提升至 53.4\%，ORR 控制在 5.0\%。
 
 \subsection{综合讨论}\label{ux7efcux5408ux8ba8ux8bba-1}
 
-本章方法能在安全鲁棒性与业务可用性之间取得平衡，主要来自四项设计：一是面向“语言合规但工程危险”风险的四类风险体系，使偏好数据可以定向构造；二是将根节点拒答统一为 $k = 0$ 特例，并先建立根节点边界、再叠加深层恢复与 Counter Data 的两阶段训练；三是原生 token 边界截取与共享前缀掩码，使到达状态与原生成轨迹一致、偏好差只取决于续写分支；四是 HS-Weighting，无需人工词典即可把梯度集中到偏好反转的困难状态与转向位置，在 ORR 不上升的前提下将 SRR 提升至 53.4\%。
+本章方法在安全鲁棒性与业务可用性之间取得平衡，主要来自四项设计：四类风险体系使偏好数据可以定向构造；将根节点拒答统一为 $k = 0$ 特例，并以两阶段训练先建立根节点边界、再叠加深层恢复与 Counter Data；原生 token 边界截取与共享前缀掩码使偏好差只取决于续写分支（式 \eqref{eq:prefix-cancel}）；HS-Weighting 无需人工词典即可把梯度集中到偏好反转的困难状态，在 ORR 不上升的前提下将 SRR 提升至 53.4\%。
 
-局限性方面，最终模型在 PrefixRobust-Eval 的 800 条样本中，完整恢复 427 条（53.4\%），攻击成功 63 条（7.9\%），其余 310 条（38.8\%）为中性安全回避。按攻击类型拆分，用户侧诱导的 ASR 为 4.5\%（18/400）、SRR 为 59.0\%（236/400）；assistant 侧预填充的 ASR 为 11.25\%（45/400）、SRR 为 47.75\%（191/400）。预填充攻击的成功率约为用户侧诱导的 2.5 倍，说明模型在已生成有害内容后的中途恢复仍是主要短板，隐蔽性最强的仿真失真类尤为突出（SRR 45.5\%，中性回避占 43.5\%）。未来可扩充隐蔽风险类别的深层恢复样本，在在线推演轨迹上引入自恢复强化学习，或引入 token 级排序间隔约束（使安全拒答起始 token 的对数概率高于潜在有害延续 token），以将更多中性回避转化为规范的三段式恢复，并进一步降低残余 ASR。
+按攻击类型拆分最终模型在 PrefixRobust-Eval 上的结果（表 \ref{tab:attack-split}），预填充攻击的 ASR 约为用户侧诱导的 2.5 倍，已生成有害内容后的中途恢复是主要的残余风险，隐蔽性最强的 R1 尤为突出（SRR 45.5\%，中性回避占 43.5\%）。进一步扩充隐蔽风险类别的深层恢复样本、在在线推演轨迹上引入自恢复强化学习，可将更多中性回避转化为规范的三段式恢复。
+
+\begin{table}[htbp]
+\centering
+\caption{最终模型在 PrefixRobust-Eval 上按攻击类型的结果}
+\label{tab:attack-split}
+\small
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{攻击类型} & \textbf{ASR} & \textbf{SRR} & \textbf{中性回避} \\
+\midrule
+用户侧诱导（400 条） & 4.50\%（18） & 59.00\%（236） & 36.50\%（146） \\
+assistant 侧预填充（400 条） & 11.25\%（45） & 47.75\%（191） & 41.00\%（164） \\
+\midrule
+合计（800 条） & 7.9\%（63） & 53.4\%（427） & 38.8\%（310） \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \vspace{0.5cm}
 \noindent \textbf{本章小结}：本章针对电力场景中的隐蔽安全风险与中途状态偏好反转问题，建立了四类递进式电力安全风险体系，通过截断案例分析与梯度显著性可视化确立了原生 token 边界截取规范；将根节点拒答统一为 $k = 0$ 特例，构建了 Recovery Data（16k）与 Counter Data（4k）两类偏好数据，并提出基于同状态恢复间隔的困难状态加权（HS-Weighting）。实验表明，最终模型将 URR 降至 1.5\%、ASR 降至 7.9\%、SRR 提升至 53.4\%，ORR 控制在 5.0\%，优于通用安全 DPO 与标准 Safety Recovery 基线，并基本保持了前序阶段的电力业务能力与风格控制能力。
