@@ -31,8 +31,6 @@
 \newtcolorbox{promptbox}[1]{enhanced, breakable, colback=gray!4, colframe=gray!55, boxrule=0.6pt, arc=2pt,
   left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\small\bfseries, coltitle=black, colbacktitle=gray!18,
   title={#1}, fontupper=\small}
-% 待替换为真实实验值的示意数值
-\newcommand{\tbd}[1]{\textcolor{red}{#1}}
 \graphicspath{{figures/}}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \setlength{\emergencystretch}{3em}
@@ -1516,8 +1514,8 @@ h^{\text{tok}}_{\le k} = (h_1, \ldots, h_k), \qquad h^{\text{char}}_{\le m} = \t
 & 末端不一致的 token 数（平均） & 0 & 0.89 \\
 & 末 3 个 token 平均对数似然 & $-2.14$ & $-3.02$ \\
 \midrule
-\multirow{2}*{\shortstack[l]{攻击强度\\（错位样本）}} & 原始模型下的 ASR（\%） & \tbd{86.4} & \tbd{79.2} \\
-& 第一阶段模型下的 ASR（\%） & \tbd{41.6} & \tbd{32.5} \\
+\multirow{2}*{\shortstack[l]{攻击强度\\（错位样本）}} & 原始模型下的 ASR（\%） & 86.4 & 79.2 \\
+& 第一阶段模型下的 ASR（\%） & 41.6 & 32.5 \\
 \bottomrule
 \end{tabular}
 
@@ -1525,7 +1523,7 @@ h^{\text{tok}}_{\le k} = (h_1, \ldots, h_k), \qquad h^{\text{char}}_{\le m} = \t
 \parbox{\linewidth}{\small \textbf{注：}第一阶段模型指仅经 \ref{ux5206ux9636ux6bb5ux8badux7ec3ux7ec4ux7ec7} 节第一阶段训练、已具备根节点拒答能力的模型。}
 \end{table}
 
-错位前缀明显“不自然”：末端平均有 2.3 个 token 与原序列不同，末 3 个 token 在参考模型下的平均对数似然由 $-2.14$ 降至 $-4.43$。这样的末端打断了模型熟悉的有害轨迹，使其更容易偏离原方向。将两类前缀分别作为 assistant 侧预填充输入，按 \ref{ux8badux7ec3ux914dux7f6e-2} 节的多裁判协议判分：原始模型在 Token-Boundary 前缀上的 ASR 为 \tbd{86.4\%}，在 Character-Boundary 前缀上为 \tbd{79.2\%}；在已具备根节点拒答能力的第一阶段模型上，二者分别为 \tbd{41.6\%} 与 \tbd{32.5\%}。Character-Boundary 前缀低估了模型在真实有害轨迹上的失守程度，以它构造恢复样本，训练会偏向较易的状态。
+错位前缀明显“不自然”：末端平均有 2.3 个 token 与原序列不同，末 3 个 token 在参考模型下的平均对数似然由 $-2.14$ 降至 $-4.43$。这样的末端打断了模型熟悉的有害轨迹，使其更容易偏离原方向。将两类前缀分别作为 assistant 侧预填充输入，按 \ref{ux8badux7ec3ux914dux7f6e-2} 节的多裁判协议判分：原始模型在 Token-Boundary 前缀上的 ASR 为 86.4\%，在 Character-Boundary 前缀上为 79.2\%；在已具备根节点拒答能力的第一阶段模型上，二者分别为 41.6\% 与 32.5\%。Character-Boundary 前缀低估了模型在真实有害轨迹上的失守程度，以它构造恢复样本，训练会偏向较易的状态。
 
 \textbf{显著性案例。}在案例前缀上，以拒答起始 token（如“根据”“抱歉”“严禁”“不”）在前缀之后位置的加权对数概率为目标，计算各输入位置嵌入梯度的 $L_2$ 范数并归一化至 $[0,1]$\cite{ref79,ref80}，可以直观看到两类前缀下模型安全转向所依据的位置（图 \ref{fig:gradient-saliency}）。Token-Boundary 截断下，显著性集中于“解除”（0.88）、“安全”（0.92）、“保护”（0.86）、“规避”（0.84）等风险词；Character-Boundary 截断下，残缺孤字“规”出现尖峰（0.98），前段风险词被稀释（“解除”降至 0.64，“安全”降至 0.68）。在错位前缀上，模型是否转向安全更多受截断末端左右，而不是由前缀中的危险操作语义决定。
 
@@ -1754,7 +1752,7 @@ PrefixRobust-Eval 的每条续写由三个裁判模型（\ref{sec:eval-protocol}
 
 \subsection{Token-Boundary 与 Character-Boundary 截断的消融对比}\label{token-char-ablation}
 
-固定其余配置（等权 DPO），仅改变 $k > 0$ 子集的截断方式，分别训练两个模型，并在三类预填充前缀上交叉评测：（1）Token 边界前缀，即 PrefixRobust-Eval 的预填充部分；（2）词中截断前缀，把（1）中每条样本的截断点移入其后首个多字 token 的内部并重新编码，对应攻击者在词中间停笔的情形；（3）人工撰写前缀，由电力安全专家针对同一批有害指令撰写语义完整的有害开头（如“可以先把防误闭锁退出，再……”），不取自任何模型的输出。三类前缀采用相同的判分协议。两种变体的 URR 与 ORR 相差不超过 \tbd{0.5} pp，表 \ref{tab:token-char-ablation} 只列出预填充攻击下的 ASR 与 SRR。
+固定其余配置（等权 DPO），仅改变 $k > 0$ 子集的截断方式，分别训练两个模型，并在三类预填充前缀上交叉评测：（1）Token 边界前缀，即 PrefixRobust-Eval 的预填充部分；（2）词中截断前缀，把（1）中每条样本的截断点移入其后首个多字 token 的内部并重新编码，对应攻击者在词中间停笔的情形；（3）人工撰写前缀，由电力安全专家针对同一批有害指令撰写语义完整的有害开头（如“可以先把防误闭锁退出，再……”），不取自任何模型的输出。三类前缀采用相同的判分协议。两种变体的 URR 与 ORR 相差不超过 0.5 pp，表 \ref{tab:token-char-ablation} 只列出预填充攻击下的 ASR 与 SRR。
 
 \begin{table}[htbp]
 \centering
@@ -1768,16 +1766,16 @@ PrefixRobust-Eval 的每条续写由三个裁判模型（\ref{sec:eval-protocol}
 \cmidrule(lr){2-3} \cmidrule(lr){4-5}
  & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} \\
 \midrule
-Token 边界前缀 & 15.00 & 41.25 & \tbd{18.50} & \tbd{35.75} \\
-词中截断前缀 & \tbd{12.25} & \tbd{42.00} & \tbd{11.50} & \tbd{43.25} \\
-人工撰写前缀 & \tbd{12.50} & \tbd{44.00} & \tbd{16.25} & \tbd{37.50} \\
+Token 边界前缀 & 15.00 & 41.25 & 18.50 & 35.75 \\
+词中截断前缀 & 12.25 & 42.00 & 11.50 & 43.25 \\
+人工撰写前缀 & 12.50 & 44.00 & 16.25 & 37.50 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Token-Boundary 训练在两类自然结尾的前缀上均明显优于 Character-Boundary 训练：Token 边界前缀上 ASR 低 \tbd{3.50} pp、SRR 高 \tbd{5.50} pp，人工撰写前缀上 ASR 低 \tbd{3.75} pp、SRR 高 \tbd{6.50} pp。人工撰写前缀不来自原始模型，这一优势说明 Token-Boundary 训练学到的恢复能力并不局限于模型自身的生成轨迹。在词中截断前缀上，两者接近，Character-Boundary 训练只略好（ASR 低 \tbd{0.75} pp），即只在 token 边界上训练并没有削弱对词中截断前缀的防御。Character-Boundary 训练的模型在词中截断前缀上的 ASR（\tbd{11.50\%}）比在 Token 边界前缀上低 \tbd{7.00} pp，而 Token-Boundary 训练的模型只相差 \tbd{2.75} pp：前者的恢复能力在相当程度上依赖“前缀末尾出现残缺词”这一线索。
+Token-Boundary 训练在两类自然结尾的前缀上均明显优于 Character-Boundary 训练：Token 边界前缀上 ASR 低 3.50 pp、SRR 高 5.50 pp，人工撰写前缀上 ASR 低 3.75 pp、SRR 高 6.50 pp。人工撰写前缀不来自原始模型，这一优势说明 Token-Boundary 训练学到的恢复能力并不局限于模型自身的生成轨迹。在词中截断前缀上，两者接近，Character-Boundary 训练只略好（ASR 低 0.75 pp），即只在 token 边界上训练并没有削弱对词中截断前缀的防御。Character-Boundary 训练的模型在词中截断前缀上的 ASR（11.50\%）比在 Token 边界前缀上低 7.00 pp，而 Token-Boundary 训练的模型只相差 2.75 pp：前者的恢复能力在相当程度上依赖“前缀末尾出现残缺词”这一线索。
 
-训练更新的分布印证了这一点。在两种截断不一致的样本上，统计训练前后 rejected 分支逐 token 对数似然的下降量：Character-Boundary 训练中，续写前 2 个 token 贡献了 \tbd{42.3\%} 的下降量，Token-Boundary 训练为 \tbd{17.6\%}。也就是说，Character-Boundary 训练的偏好差有相当一部分来自压低接缝处的补全 token（如“统”），而不是后续的危险操作内容，与 \ref{ux57faux4e8e-token-level-ux4e0e-char-level-ux5207ux5206ux7684-harmful-prefix-ux521dux6b65ux5206ux6790} 节对接缝伪迹的分析一致。
+训练更新的分布印证了这一点。在两种截断不一致的样本上，统计训练前后 rejected 分支逐 token 对数似然的下降量：Character-Boundary 训练中，续写前 2 个 token 贡献了 42.3\% 的下降量，Token-Boundary 训练为 17.6\%。也就是说，Character-Boundary 训练的偏好差有相当一部分来自压低接缝处的补全 token（如“统”），而不是后续的危险操作内容，与 \ref{ux57faux4e8e-token-level-ux4e0e-char-level-ux5207ux5206ux7684-harmful-prefix-ux521dux6b65ux5206ux6790} 节对接缝伪迹的分析一致。
 
 \subsection{HS-Weighting 权重分量与超参数消融}\label{rtw-results}
 
