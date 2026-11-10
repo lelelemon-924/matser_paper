@@ -57,15 +57,15 @@
     \node[box=tyellow, below=0.45cm of sft-in] (sft-proc) {\textbf{核心处理}\\六模块场景原生合成管线\\两阶段微调 + DFT 奖励校正};
     \node[box=tyellow, below=0.45cm of sft-proc] (sft-out) {\textbf{输出层}\\SFT 多任务模型\\（保留七类原生风格）};
 
-    % ==================== 3. 第三列：RLHF ====================
-    \node[header=tgreen, right=1.15cm of sft-head] (rlhf-head) {阶段三：RLHF 风格对齐};
-    \node[box=tgreen, below=0.35cm of rlhf-head] (rlhf-in) {\textbf{输入层}\\SFT 输出基座模型\\约 1.5 万条风格对齐样本};
+    % ==================== 3. 第三列：RLAIF ====================
+    \node[header=tgreen, right=1.15cm of sft-head] (rlhf-head) {阶段三：RLAIF 风格对齐};
+    \node[box=tgreen, below=0.35cm of rlhf-head] (rlhf-in) {\textbf{输入层}\\SFT 输出基座模型\\约 1.5 万条风格强度标注样本};
     \node[box=tgreen, below=0.45cm of rlhf-in] (rlhf-proc) {\textbf{核心处理}\\三维强度条件化 Prefix\\CORAL-7B 判别 + GRPO};
-    \node[box=tgreen, below=0.45cm of rlhf-proc] (rlhf-out) {\textbf{输出层}\\RLHF 风格可控模型\\（显式调节三维风格强度）};
+    \node[box=tgreen, below=0.45cm of rlhf-proc] (rlhf-out) {\textbf{输出层}\\RLAIF 风格可控模型\\（显式调节三维风格强度）};
 
     % ==================== 4. 第四列：DPO ====================
     \node[header=tpink, right=1.15cm of rlhf-head] (dpo-head) {阶段四：DPO 安全对齐};
-    \node[box=tpink, below=0.35cm of dpo-head] (dpo-in) {\textbf{输入层}\\RLHF 输出基座模型\\两类互补安全偏好数据};
+    \node[box=tpink, below=0.35cm of dpo-head] (dpo-in) {\textbf{输入层}\\RLAIF 输出基座模型\\两类互补安全偏好数据};
     \node[box=tpink, below=0.45cm of dpo-in] (dpo-proc) {\textbf{核心处理}\\Recovery（含 $k=0$）/ Counter\\HS-Weighting 困难状态加权};
     \node[box=tpink, below=0.45cm of dpo-proc] (dpo-out) {\textbf{输出层}\\最终部署模型\\（知识+任务+风格+安全）};
 
@@ -73,10 +73,10 @@
     \coordinate (topY) at ([yshift=1.45cm]cpt-head.north);
     \path (cpt-head.west) -- (sft-head.east) coordinate[midway] (mid12);
     \node[labelband=tcyan, text width=9.8cm] (label7) at (mid12 |- topY) {七类电力数据标签贯穿（保留领域知识来源与原生业务场景）};
-    \node[labelband=tgreen, text width=4.3cm] (label3) at (rlhf-head |- topY) {三类场景归纳标签\\（风格控制目标映射）};
+    \node[labelband=tgreen, text width=4.3cm] (label3) at (rlhf-head |- topY) {三类目标用户群体\\（按提问者角色设定风格）};
     \node[labelband=tpink, text width=4.3cm] (labelsafe) at (dpo-head |- topY) {四类安全风险标签\\（深层安全合规边界）};
 
-    \draw[arrow, draw=tcyan!90!black] (label7.east) -- node[above, font=\scriptsize] {归纳} (label3.west);
+    \draw[arrow, dashed, draw=black!50] (label7.east) -- (label3.west);
     \draw[arrow, dashed, draw=black!50] (label3.east) -- (labelsafe.west);
 
     \draw[arrow, dashed, draw=tcyan!85!black] (label7.south -| cpt-head.north) -- (cpt-head.north);

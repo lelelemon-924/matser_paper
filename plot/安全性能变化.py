@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams, font_manager
 
 candidates = [
+    "PingFang SC",
+    "Heiti TC",
     "Microsoft YaHei",
     "SimHei",
     "Noto Sans CJK SC",
@@ -31,7 +33,7 @@ data = {
         "ylabel": "URR (%)",
         "ylim": (0, 50),
         "yticks": [0, 10, 20, 30, 40, 50],
-        "values": [42.5, 9.0, 3.0, 1.75, 1.5],
+        "values": [42.5, 9.0, 2.5, 1.75, 1.5],
         "labels": [(0, "left", (6, 4)), (2, "center", (0, 8)), (4, "right", (-4, 8))],
     },
     "ASR": {
@@ -55,7 +57,7 @@ data = {
         "ylabel": "ORR (%)",
         "ylim": (0, 22),
         "yticks": [0, 5, 10, 15, 20],
-        "values": [7.0, 11.0, 40/3, 19/3, 5.0],
+        "values": [7.0, 11.0, 38/3, 19/3, 5.0],
         "labels": [(0, "left", (6, -12)), (2, "center", (0, 8)), (4, "right", (-4, 8))],
     },
 }

@@ -1,0 +1,191 @@
+\documentclass[11pt, tikz, border=8pt]{standalone}
+\usepackage[fontset=fandol]{ctex}
+\usepackage{amsmath, amssymb, bm}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds, decorations.pathreplacing}
+
+\definecolor{cPre}{RGB}{204, 112, 34}
+\definecolor{cQ}{RGB}{64, 128, 186}
+\definecolor{cPol}{RGB}{38, 148, 128}
+\definecolor{cOut}{RGB}{136, 84, 162}
+\definecolor{cRM}{RGB}{62, 82, 102}
+\definecolor{cRw}{RGB}{196, 150, 24}
+\definecolor{cHead}{RGB}{44, 108, 162}
+\definecolor{cHL}{RGB}{214, 69, 69}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily\footnotesize,
+    box/.style={draw=#1!75!black, fill=#1!9, thick, rounded corners=3pt, align=center, inner sep=5pt},
+    arr/.style={-{Latex[scale=1.0]}, thick, draw=black!55},
+    sarr/.style={-{Latex[scale=0.7]}, semithick, draw=black!55},
+    tok/.style={draw=#1!70!black, fill=#1!14, minimum width=0.5cm, minimum height=0.36cm, inner sep=0pt, rounded corners=1pt},
+    hid/.style={circle, draw=black!45, fill=white, minimum size=0.36cm, inner sep=0pt},
+    cell/.style={draw=#1!70!black, fill=#1!45, minimum width=0.24cm, minimum height=0.17cm, inner sep=0pt},
+    lbl/.style={font=\scriptsize, text=black!65, align=center},
+    colhead/.style={font=\scriptsize, text=cHead!80!black, align=center},
+]
+
+% ======================= 上半部分：Rollout 与策略更新 =======================
+\node[box=cPre, minimum width=4.0cm] (pre) at (0, 0.5)
+    {\textbf{风格条件化 Prefix} $p(\mathbf{s}^{g})$\\[1pt]{\scriptsize [展开:精简]\,[安全:逐项警戒]\,[表述:指令]}};
+\node[box=cQ, minimum width=4.0cm, below=0.12cm of pre] (q)
+    {\textbf{电力场景问题} $x$\\[1pt]{\scriptsize 某 220kV 主变顶层油温持续升高，}\\{\scriptsize 请分析原因并给出排查建议}};
+\node[fit=(pre)(q), draw=black!35, dashed, rounded corners=4pt, inner sep=3pt,
+      label={[lbl]above:策略输入 $p(\mathbf{s}^{g}) \oplus x$（生产运维人员）}] (inp) {};
+
+\node[box=cPol, minimum height=1.45cm, minimum width=2.4cm] (pol) at (5.0, -0.1)
+    {\textbf{策略模型} $\pi_\theta$\\[2pt]{\scriptsize SFT 模型初始化}};
+
+\node[box=cOut, minimum width=2.1cm, minimum height=1.3cm] (o3) at (9.02, 0.12) {};
+\node[box=cOut, minimum width=2.1cm, minimum height=1.3cm] (o2) at (8.91, 0.01) {};
+\node[box=cOut, minimum width=2.1cm, minimum height=1.3cm] (o1) at (8.8, -0.1)
+    {\textbf{采样回答}\\[2pt]$o_1, \dots, o_G$};
+
+\node[box=cRM, minimum height=1.45cm, minimum width=2.4cm] (rm) at (13.6, -0.1)
+    {\textbf{StyleRM-7B}\\[2pt]{\scriptsize 风格奖励模型（冻结）}};
+
+\node[box=cRw, minimum width=4.1cm, minimum height=1.1cm] (rw) at (18.6, -0.1)
+    {\textbf{风格奖励} $r_i$\\[2pt]{\scriptsize 目标类别概率开根号后加权平均}};
+\node[box=cRw, minimum width=4.1cm, minimum height=1.1cm] (adv) at (18.6, 1.85)
+    {\textbf{优势估计} $\hat{A}_i$\\[2pt]{\scriptsize Critic 或组内基线}};
+
+\draw[arr] (inp.east |- pol) -- (pol.west);
+\draw[arr] (pol.east) -- node[lbl, above] {Rollout} (o1.west |- pol);
+\draw[arr] (o3.east |- rm) -- node[lbl, above] {$(x, o_i)$} node[lbl, below] {去掉 Prefix} (rm.west);
+\draw[arr] (rm.east) -- (rw.west);
+\draw[arr] (rw.north) -- (adv.south);
+\draw[arr, dashed, draw=cPol!80!black] (adv.west) -| node[lbl, pos=0.3, above, text=cPol!70!black]
+    {策略更新（PPO / RLOO / GRPO）} (pol.north);
+
+% ======================= 下半部分：StyleRM-7B 结构 =======================
+\def\ptop{-2.1}
+\def\yh{-4.55}
+\def\yT{-5.6}
+\def\yt{-6.65}
+
+\foreach \i in {0,1,2} {
+    \node[tok=cQ] (t\i) at ({-1.1 + 0.7*\i}, \yt) {};
+}
+\foreach \i in {3,4,5} {
+    \node[tok=cOut] (t\i) at ({-1.1 + 0.7*\i}, \yt) {};
+}
+\node[tok=cHL, thick] (t6) at (3.1, \yt) {};
+\foreach \i in {0,...,5} { \node[hid] (h\i) at ({-1.1 + 0.7*\i}, \yh) {}; }
+\node[hid, fill=cHL!85, draw=cHL!80!black] (h6) at (3.1, \yh) {};
+
+\node[draw=cRM!70!black, fill=cRM!10, thick, rounded corners=3pt, minimum width=4.9cm, minimum height=0.75cm,
+      align=center, font=\scriptsize] (tf) at (1.0, \yT)
+    {\textbf{Qwen2.5-7B 主干}（因果注意力）};
+\foreach \i in {0,...,6} {
+    \draw[-{Latex[scale=0.6]}, black!40] (t\i.north) -- (t\i.north |- tf.south);
+    \draw[-{Latex[scale=0.6]}, black!40] (h\i.south |- tf.north) -- (h\i.south);
+}
+
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}, black!55]
+    ($(t0.south west) + (0, -0.06)$) -- ($(t2.south east) + (0, -0.06)$)
+    node[midway, below=4pt, lbl] {问题 $x$};
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}, black!55]
+    ($(t3.south west) + (0, -0.06)$) -- ($(t6.south east) + (0, -0.06)$)
+    node[midway, below=4pt, lbl] {回答 $o_i$（不含 Prefix）};
+
+\node[fit=(h3)(h6), draw=cOut!70!black, dashed, rounded corners=3pt, inner sep=2.5pt] (Hbox) {};
+\node[lbl, anchor=south] at (1.95, -4.2)
+    {虚线框：回答隐藏状态 $\mathbf{H}$\\{\color{cHL!80!black}红色：末位隐藏状态 $\mathbf{h} \in \mathbb{R}^{3584}$}};
+
+% ---------- 风格注意力分类头（图示） ----------
+\begin{scope}[on background layer]
+    \node[fit={(4.05, -3.05) (9.55, -7.0)}, draw=cHead!60, fill=cHead!4, dashed, thick, rounded corners=5pt, inner sep=0pt] (headreg) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=cHead!80!black] at (6.8, -3.28) {风格注意力分类头（约 1000 万参数）};
+
+% 类目查询
+\node[draw=cHead!70!black, fill=white, rounded corners=2pt, font=\scriptsize, inner sep=3pt] (qk) at (5.95, -3.95)
+    {查询 $\mathbf{q}_k = \mathbf{W}_Q\mathbf{h} + \mathbf{e}_k$};
+\node[cell=cHead, minimum width=0.2cm, minimum height=0.2cm] (e1) at (8.1, -3.95) {};
+\node[cell=cPre,  minimum width=0.2cm, minimum height=0.2cm] (e2) at (8.36, -3.95) {};
+\node[cell=cOut,  minimum width=0.2cm, minimum height=0.2cm] (e3) at (8.62, -3.95) {};
+\node[lbl, anchor=north] at (8.36, -4.1) {类目嵌入 $\mathbf{e}_k$};
+\draw[sarr] (e1.west) -- (qk.east);
+
+% 注意力池化
+\node[draw=cHead!70!black, fill=white, rounded corners=2pt, minimum width=2.3cm, minimum height=1.05cm] (attn) at (5.95, -5.25) {};
+\node[font=\scriptsize, anchor=north] at ($(attn.north) + (0, -0.02)$) {注意力权重 $\alpha_{k,t}$};
+\foreach \j/\v in {0/0.10, 1/0.38, 2/0.16, 3/0.26} {
+    \fill[cOut!65] ({5.35 + 0.4*\j - 0.12}, -5.6) rectangle ++(0.24, {\v});
+}
+\draw[black!35] (5.0, -5.6) -- (6.9, -5.6);
+\draw[sarr] (qk.south) -- node[lbl, right] {查询} (attn.north);
+
+% 拼接向量 [h; z_k]
+\foreach \j in {0,1,2} { \node[cell=cHL] (ch\j) at (7.65, {-4.92 - 0.17*\j}) {}; }
+\foreach \j in {0,1,2} { \node[cell=cOut] (cz\j) at (7.65, {-5.43 - 0.17*\j}) {}; }
+\node[lbl, anchor=south] at (7.65, -4.78) {$[\mathbf{h};\mathbf{z}_k]$};
+\draw[sarr] (attn.east) -- node[lbl, above, pos=0.45] {$\mathbf{z}_k$} (cz0.west |- attn.east);
+
+% MLP
+\node[draw=cHead!70!black, fill=cHead!25, minimum width=0.28cm, minimum height=1.05cm, inner sep=0pt] (m1) at (8.42, -5.25) {};
+\node[draw=cHead!70!black, fill=cHead!45, minimum width=0.28cm, minimum height=0.7cm, inner sep=0pt] (m2) at (8.95, -5.25) {};
+\node[lbl, anchor=north] at (8.42, -5.82) {$\mathbf{W}^{(1)}$\\GELU};
+\node[lbl, anchor=north] at (8.95, -5.82) {$\mathbf{W}^{(2)}_k$};
+\draw[sarr] (8.0, -5.25) -- (m1.west);
+\draw[sarr] (m1.east) -- (m2.west);
+
+% 输入连线：H 进入注意力，h 进入查询与拼接
+\coordinate (B) at (3.75, -4.55);
+\draw[thick, black!55] (Hbox.east) -- (B);
+\draw[sarr, draw=cHL!80!black] (B) |- node[lbl, pos=0.75, above, text=cHL!80!black] {$\mathbf{h}$} (qk.west);
+\draw[sarr, draw=cOut!80!black] (B) |- node[lbl, pos=0.75, above, text=cOut!80!black] {$\mathbf{H}$（键 / 值）} (attn.west);
+\draw[sarr, draw=cHL!80!black, dashed] (B) |- (7.2, -6.25) -| node[lbl, pos=0.25, below, text=cHL!80!black] {$\mathbf{h}$} (cz2.south);
+
+\node[lbl, anchor=north] at (6.4, -6.45) {$\mathbf{W}_Q, \mathbf{W}_K, \mathbf{W}_V, \mathbf{W}^{(1)}$ 三类目共享，$\mathbf{W}^{(2)}_k$ 各类目独立};
+
+% 列标题
+\node[colhead] at (6.8, -2.75) {\textbf{分类头}};
+\node[colhead] at (11.0, -2.75) {\textbf{各类目 softmax 分布}};
+\node[colhead] at (13.6, -2.75) {\textbf{目标类别概率}};
+
+% 三个风格类目
+\foreach \r/\y/\name/\ka/\kb/\kc/\pa/\pb/\pc/\ev in {
+    1/-3.8/展开程度/精简/适中/详尽/0.82/0.15/0.03/$P_{\text{elab}}(c)$,
+    2/-5.15/安全警示/基础/前置/逐项/0.04/0.16/0.80/$P_{\text{warn}}(c)$,
+    3/-6.5/表述类型/研讨/指令/裁定/0.06/0.88/0.06/$P_{\text{role}}(c)$} {
+    \node[draw=black!25, fill=white, rounded corners=3pt, minimum width=2.4cm, minimum height=1.3cm] (dist\r) at (11.0, \y) {};
+    \node[font=\tiny\bfseries, text=cHead!60!black, anchor=north] at ($(dist\r.north) + (0,-0.03)$) {\name};
+    \foreach \j/\p/\c in {1/\pa/\ka, 2/\pb/\kb, 3/\pc/\kc} {
+        \fill[cHead!75] ({11.0 + 0.62*(\j-2) - 0.2}, {\y - 0.38}) rectangle ++(0.4, {0.6*\p});
+        \node[font=\tiny, text=black!55, anchor=north, inner sep=1pt] at ({11.0 + 0.62*(\j-2)}, {\y - 0.38}) {\c};
+    }
+    \draw[black!35] (10.0, {\y - 0.38}) -- (12.0, {\y - 0.38});
+
+    \node[box=cHead, minimum width=1.4cm, minimum height=0.8cm, font=\small] (ex\r) at (13.6, \y) {\ev};
+
+    \draw[sarr] (m2.east) -- node[lbl, above, sloped, pos=0.55] {\tiny softmax} (dist\r.west);
+    \draw[arr] (dist\r.east) -- (ex\r.west);
+}
+
+\node[lbl, anchor=north] at (11.8, -7.28)
+    {三个风格类目统一输出 3 类 softmax 分布，取目标类别 $c_k$ 的概率计算奖励};
+
+\begin{scope}[on background layer]
+    \node[fit={(-1.75, \ptop) (14.9, -7.9)}, draw=cRM!45, fill=cRM!3, dashed, thick, rounded corners=6pt, inner sep=0pt] (panel) {};
+\end{scope}
+
+\node[box=cRw, minimum width=4.1cm, minimum height=3.3cm, inner sep=8pt] (ksel) at (18.6, -5.15)
+    {\textbf{风格奖励聚合}\\[10pt]
+     {$\begin{aligned}
+     P_k &= P_k(c_k \mid x, o_i) \\[4pt]
+     r_i &= \textstyle\sum_{k} w_k \sqrt{P_k}, \quad w_k = \tfrac{1}{3}
+     \end{aligned}$}\\[8pt]
+     {\scriptsize 开根号：放大低概率处的奖励差异，}\\{\scriptsize 抑制接近 1 时的奖励增长}};
+\draw[cRw!55!black, thin] ($(ksel.north west)+(0.3,-0.68)$) -- ($(ksel.north east)+(-0.3,-0.68)$);
+\draw[arr, draw=cRw!80!black] (ex1.east) -- (ksel.west |- ex1);
+\draw[arr, draw=cRw!80!black] (ex2.east) -- (ksel.west |- ex2);
+\draw[arr, draw=cRw!80!black] (ex3.east) -- (ksel.west |- ex3);
+\draw[arr] (ksel.north) -- (rw.south);
+
+\node[font=\footnotesize\bfseries, text=cRM!85!black, anchor=north west] at ($(panel.north west) + (0.15, -0.1)$)
+    {StyleRM-7B 奖励模型结构};
+\draw[dashed, thick, draw=cRM!55] (rm.south) -- node[lbl, right] {内部结构} (rm.south |- panel.north);
+
+\end{tikzpicture}
+\end{document}

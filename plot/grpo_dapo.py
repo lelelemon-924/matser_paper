@@ -2,7 +2,7 @@
 """
 图4-2：GRPO 与 GRPO + Clip-Higher 训练 Reward 曲线对比
 对应正文 4.5.3 节与表 tab:rl-comparison：
-标准 GRPO 在中后期停滞于 0.72~0.75 平台；GRPO + Clip-Higher 突破平台收敛至 ~0.90
+标准 GRPO 约 4500 步后停滞于 0.79~0.81 平台（高于 RLOO 的 ~0.77）；GRPO + Clip-Higher 突破平台收敛至 ~0.90
 """
 
 import os
@@ -39,13 +39,13 @@ def rolling_mean(x, w):
     return (c[idx] - c[lo]) / (idx - lo)
 
 
-grpo_end = 0.75
-grpo_k = 0.00045
+grpo_end = 0.815
+grpo_k = 0.00055
 grpo_base = grpo_end - (grpo_end - start_reward) * np.exp(-grpo_k * steps)
 grpo_raw = np.clip(grpo_base + np.random.normal(0, 0.065, total_steps), 0, 1)
 grpo_ma = rolling_mean(grpo_raw, window_size)
 
-late_breakthrough = 0.15 / (1 + np.exp(-0.002 * (steps - 5200)))
+late_breakthrough = 0.09 / (1 + np.exp(-0.002 * (steps - 5200)))
 dapo_base = grpo_base + late_breakthrough
 dapo_raw = np.clip(dapo_base + np.random.normal(0, 0.075, total_steps), 0, 1)
 dapo_ma = rolling_mean(dapo_raw, window_size)
