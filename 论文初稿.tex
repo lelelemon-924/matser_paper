@@ -7,8 +7,10 @@
 \usepackage{hithesis}
 \xeCJKsetup{AutoFallBack=true}
 % Fandol 缺“鋆”。正文/宋体统一为系统 Songti SC，避免该字回退成另一字体；
+% 无 Songti SC 的系统（如 Windows）改用同源的华文宋体 STSong，同样含“鋆”。
 % 黑/楷/仿仍来自 fontset=fandol。
 \makeatletter
+\IfFontExistsTF{Songti SC}{%
 \newcommand{\hit@useSongtiSC}{%
   \setCJKmainfont{Songti SC}[BoldFont=* Bold]%
   \setCJKfamilyfont{zhsong}{Songti SC}[BoldFont=* Bold]%
@@ -22,6 +24,17 @@
     UprightFont=NotoSansCJKsc-Regular,
     BoldFont=NotoSansCJKsc-Bold,
   ]{NotoSansCJKsc}%
+}%
+}{%
+\newcommand{\hit@useSongtiSC}{%
+  \setCJKmainfont{STSong}[AutoFakeBold=2]%
+  \setCJKfamilyfont{zhsong}{STSong}[AutoFakeBold=2]%
+  \setCJKfallbackfamilyfont{\CJKrmdefault}{STSong}%
+  \setCJKfallbackfamilyfont{zhsong}{STSong}%
+  \setCJKfallbackfamilyfont{zhkai}{STSong}%
+  \setCJKfallbackfamilyfont{zhfs}{STSong}%
+  \setCJKfallbackfamilyfont{zhhei}{SimHei}%
+}%
 }
 \hit@useSongtiSC
 \AtBeginDocument{\hit@useSongtiSC}
@@ -33,6 +46,7 @@
   title={#1}, fontupper=\small}
 \graphicspath{{figures/}}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 \setlength{\emergencystretch}{3em}
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
@@ -71,7 +85,7 @@
 \begin{cabstract}
 近年来，大语言模型在通用自然语言处理任务中取得了显著进展，但在数字电网知识服务场景中的应用仍面临领域知识不足、专业术语理解不稳定、故障诊断推理能力有限、制度问答依据性不足以及安全合规边界不清晰等问题。电力领域具有知识体系复杂、规程约束严格、业务风险较高等特点，因此需要针对电力知识问答、故障诊断、制度问答和技术方案分析等任务构建专门的领域大语言模型训练与对齐方法。
 针对上述问题，本文提出一种面向数字电网知识服务的领域大语言模型四阶段训练框架，依次包括持续预训练（CPT）、监督微调（SFT）、基于 AI 反馈的风格强化学习对齐（RLAIF）和安全直接偏好优化（DPO）。CPT 阶段以南方电网内部语料（含故障工单、检修记录、运行规程与管理制度等）和公开电力资料构建七类电力语料，与通用语料按 1:1 混合训练，注入电力术语与规程知识。SFT 阶段设计了“专家种子构建—设计逻辑提取—知识图谱构建—图遍历指令生成—指令演化—自动化质量筛选”六模块数据合成管线（下文简称六模块管线），在七类数据的原生业务场景中直接构造指令数据，并引入动态微调（DFT）目标降低低概率表面 token 的相对梯度权重。RLAIF 阶段将回答风格拆分为展开程度、安全警示与表述类型三个类目，为技术研究人员、生产运维人员和管理人员三类目标用户群体各规定一组固定的风格组合，风格控制与语料类别解耦；风格数据先按提问角色对问题分类，再以经人类反馈迭代的改写 Prompt 构建，并采用风格条件化 Prefix 与 GRPO + Clip-Higher 实现按用户群体的风格控制。DPO 阶段将根节点基础拒答视为零前缀长度（$k=0$）的特例，构建统一的安全恢复数据（Recovery Data）与反偏保守数据（Counter Data）两类互补偏好数据，并结合融合样本级困难权重与 token 级转向权重的困难状态加权（HS-Weighting）进行两阶段训练，以增强安全拒答与预填充恢复能力并控制过度拒答。
-实验结果表明：CPT 将电力领域综合得分从 43.5\% 提升至 68.2\%；SFT 将 PowerQA 提升至 82.3\%，FaultDiag 首因准确率达 63.0\%，RegulationQA 依据正确性达 78.0\%；RLAIF 使风格命中率（SHR）从 38.4\% 提升至 81.6\%；DPO 将不安全回答率（URR）降至 1.5\%、攻击成功率（ASR）降至 7.9\%、安全恢复率（SRR）提升至 53.4\%、过度拒答率（ORR）控制在 5.0\%。最终模型在 PowerQA（81.2\%）、FaultDiag（61.3\%）、RegulationQA（77.0\%）和风格控制（SHR 80.5\%）上均基本保持了前序阶段的表现；与同规模的 Qwen2.5-7B-Instruct 相比，三项领域任务平均提升 39.4 个百分点，并在 RegulationQA 依据正确性上超过教师模型 Qwen-Max。
+实验结果表明：CPT 将电力领域综合得分从 43.5\% 提升至 68.2\%；SFT 将 PowerQA 提升至 82.3\%，FaultDiag 首因准确率达 63.0\%，RegulationQA 依据正确性达 78.0\%；RLAIF 使风格命中率（SHR）从 38.4\% 提升至 81.6\%；DPO 将不安全回答率（URR）降至 1.5\%、攻击成功率（ASR）降至 7.9\%、安全恢复率（SRR）提升至 53.4\%、过度拒答率（ORR）控制在 5.0\%。最终模型在 PowerQA（81.2\%）、FaultDiag（61.3\%）、RegulationQA（77.0\%）和风格控制（SHR 80.5\%）上均基本保持了前序阶段的表现；与同规模的 Qwen2.5-7B-Instruct 相比，三项领域任务平均提升 39.4 个百分点，并在各项领域任务上均超过教师模型 Qwen-Max。
 \end{cabstract}
 
 \begin{eabstract}
@@ -79,7 +93,7 @@ Recent years have witnessed significant progress of large language models (LLMs)
 
 To address these problems, this thesis proposes a four-stage training framework for power-domain LLMs, consisting of continual pre-training (CPT), supervised fine-tuning (SFT), style alignment via reinforcement learning from AI feedback (RLAIF), and direct preference optimization (DPO). In the CPT stage, seven categories of power corpora, built from internal China Southern Power Grid data (including fault work orders, maintenance records, operating procedures, and management regulations) and public power-domain materials, are mixed 1:1 with general corpora to inject domain terminology and regulatory knowledge. In the SFT stage, a six-module data synthesis pipeline (expert seed construction, design-logic extraction, knowledge-graph construction, graph-traversal instruction generation, instruction evolution, and automated quality filtering) constructs instruction data directly within native business scenarios, and Dynamic Fine-Tuning (DFT) is used to reduce the relative gradient weight on low-probability surface tokens. In the RLAIF stage, answer style is decomposed into three categories (elaboration, safety warning, and expression type), and each of three target user groups (technical researchers, production and maintenance staff, and managers) is assigned a fixed style combination, decoupling style control from data categories; style data are built by classifying questions by asker role and rewriting with prompts refined through human feedback, and a style-conditioned Prefix with GRPO + Clip-Higher is used for user-group-specific style control. In the DPO stage, root-level safety refusal is unified as the zero-prefix ($k=0$) special case within Recovery Data alongside Counter Data, and two-stage training with hard-state weighting (HS-Weighting) is applied to improve safety refusal and recovery from harmful prefixes while limiting over-refusal.
 
-Experimental results show that CPT raises the power-domain score from 43.5\% to 68.2\%; SFT reaches 82.3\% on PowerQA, 63.0\% Top-1 accuracy on FaultDiag, and 78.0\% on RegulationQA evidence correctness; RLAIF raises the style hit rate (SHR) from 38.4\% to 81.6\%; and DPO reaches 1.5\% URR, 7.9\% ASR, 53.4\% SRR, and 5.0\% ORR, while the final model retains 81.2\% on PowerQA, 61.3\% on FaultDiag, 77.0\% on RegulationQA, and 80.5\% on style SHR. Compared with the same-size Qwen2.5-7B-Instruct, the final model improves the three domain tasks by 39.4 points on average, and it surpasses the teacher model Qwen-Max in RegulationQA evidence correctness.
+Experimental results show that CPT raises the power-domain score from 43.5\% to 68.2\%; SFT reaches 82.3\% on PowerQA, 63.0\% Top-1 accuracy on FaultDiag, and 78.0\% on RegulationQA evidence correctness; RLAIF raises the style hit rate (SHR) from 38.4\% to 81.6\%; and DPO reaches 1.5\% URR, 7.9\% ASR, 53.4\% SRR, and 5.0\% ORR, while the final model retains 81.2\% on PowerQA, 61.3\% on FaultDiag, 77.0\% on RegulationQA, and 80.5\% on style SHR. Compared with the same-size Qwen2.5-7B-Instruct, the final model improves the three domain tasks by 39.4 points on average, and it surpasses the teacher model Qwen-Max on all domain tasks.
 \end{eabstract}
 
 \makecover
@@ -1049,7 +1063,7 @@ SFT 模型的回答风格由问题内容与语料类别隐式决定，用户无�
 \begin{equation}
 \mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N} \sum_{k \in \mathcal{K}} \log P^{(i)}_k\bigl(y^{(i)}_k\bigr)
 \end{equation}
-训练使用 \ref{ux98ceux683cux504fux597dux6570ux636eux6784ux5efaux4e0e-llm-as-judge-ux7b5bux9009} 节构建的约 1.1 万条训练集，主干与分类头联合微调，采用 AdamW 优化器，主干学习率 $1 \times 10^{-5}$、分类头学习率 $1 \times 10^{-4}$，余弦退火调度，批次大小 32，训练 3 个 epoch。
+训练使用 \ref{ux98ceux683cux504fux597dux6570ux636eux6784ux5efaux4e0e-llm-as-judge-ux7b5bux9009} 节构建的约 1.1 万条训练集，主干与分类头联合微调，采用 AdamW 优化器，主干学习率 $1 \times 10^{-5}$、分类头学习率 $1 \times 10^{-4}$，余弦退火调度，批次大小 32，在 8×A100 80GB GPU 上训练 3 个 epoch。
 
 \subsection{实验结果与分析}\label{ux98ceux683cux5224ux522bux5b9eux9a8cux7ed3ux679c}
 
@@ -1211,7 +1225,7 @@ PPO 需要维护一个与策略规模相当的 Critic，对 7B 模型意味着�
 
 \subsection{算法综合对比}\label{rl-algo-compare}
 
-\textbf{训练配置。}为使对比公平，各算法采用相同的采样预算：均训练 8500 步，每步生成 32 个回答（RLOO 与 GRPO 为 4 条 prompt $\times$ 8 个采样，PPO 为 32 条 prompt 各采样 1 个），每批 rollout 拆成 4 个 mini-batch 依次更新，策略学习率均为 $1 \times 10^{-6}$。各配置均为单次运行。
+\textbf{训练配置。}为使对比公平，各算法采用相同的采样预算：均训练 8500 步，每步生成 32 个回答（RLOO 与 GRPO 为 4 条 prompt $\times$ 8 个采样，PPO 为 32 条 prompt 各采样 1 个），每批 rollout 拆成 4 个 mini-batch 依次更新，策略学习率均为 $1 \times 10^{-6}$，均在 8×A100 80GB GPU 上训练。各配置均为单次运行。
 
 表 \ref{tab:rl-comparison} 汇总了各方法的训练末期奖励（式 \eqref{eq:intensity-reward} 的滑动平均）与末期检查点在 RoleStyle-Eval（\ref{ux98ceux683cux8bc4ux6d4bux4f53ux7cfb} 节）上的风格命中率 SHR。测试 SHR 的排序与训练奖励一致：GRPO + Clip-Higher 最高，较次优的 Dual-Clip PPO 高 3.6 pp，且无需 Critic、训练开销更低。开发集上的排序与测试集相同，本文据此选用该方法。
 
@@ -1538,7 +1552,7 @@ h^{\text{tok}}_{\le k} = (h_1, \ldots, h_k), \qquad h^{\text{char}}_{\le m} = \t
 
 \subsection{Counter Data}\label{counter-dataux53cdux504fux4fddux5b88ux6570ux636e}
 
-单纯强化安全训练会使模型学到过于宽泛的触发规则，把含敏感词的正常业务问题误判为危险请求，一线人员在紧急情况下被拒答可能延误故障处置。Counter Data 的每条样本为 $(x_{\text{benign}}, y_{\text{helpful}}, y_{\text{refusal}})$：问题含表面敏感词但实质合规，rejected 为原始模型对该问题给出、经 Qwen-Max 判为不必要的拒答，chosen 为 Qwen-Max 生成的兼顾技术准确性与必要安全提示的正常回答。原始模型的误拒比例不高，因此需从规模更大的候选问题中筛选。样本均衡覆盖五类易被误拒的场景：安全规程解释（如高处作业安全带的规定）、故障排查原则（如主变差动保护动作后的一般排查流程）、制度问答（如工作票“三种人”的安全责任）、理论仿真（如暂态稳定仿真中负荷模型的选取）与设备知识（如断路器额定开断电流）。
+单纯强化安全训练会使模型学到过于宽泛的触发规则，把含敏感词的正常业务问题误判为危险请求，一线人员在紧急情况下被拒答可能延误故障处置。Counter Data 的每条样本为 $(x_{\text{benign}}, y_{\text{helpful}}, y_{\text{refusal}})$：问题含表面敏感词但实质合规，rejected 为原始模型对该问题给出、经 Qwen-Max 判为不必要的拒答，chosen 为 Qwen-Max 生成的兼顾技术准确性与必要安全提示的正常回答。原始模型的误拒比例不高，因此需从规模更大的候选问题中筛选。样本均衡覆盖五类易被误拒的场景：安全规程解释（如高处作业安全带的规定）、故障排查原则（如主变差动保护动作后的一般排查流程）、制度问答（如工作票“三种人”的安全责任）、理论仿真（如暂态稳定仿真中负荷模型的选取）与设备知识（如断路器额定开断电流）。按上述流程共得到约 7k 条偏好对，构成 Counter Data 候选池，五类场景各约 1.4k 条；训练默认从中按场景分层随机抽取 4k 条，其余样本只用于 \ref{counter-data-ux6bd4ux4f8bux7684ux5f71ux54cdux5206ux6790} 节的占比实验。
 
 \section{深层 DPO 训练策略}\label{ux6df1ux5c42-dpo-ux8badux7ec3ux7b56ux7565}
 
@@ -1574,33 +1588,33 @@ w_{i,t} = \operatorname{sg}\!\left( \phi_i \cdot \frac{T\,[(1 - \lambda) + \lamb
 
 \subsection{两阶段训练}\label{ux5206ux9636ux6bb5ux8badux7ec3ux7ec4ux7ec7}
 
-训练遵循“先稳固根节点拒答边界，再叠加深层恢复与反偏保守约束”的原则，分两个阶段，每阶段固定训练 $S = 1000$ 步、全局 batch size $B = 32$（表 \ref{tab:training-stages}）。阶段数据量为 $N$ 时，数据遍历周期数为 $E = SB/N$。
+训练遵循“先稳固根节点拒答边界，再叠加深层恢复与反偏保守约束”的原则，分两个阶段，每阶段在对应数据上训练 1 个 epoch，全局 batch size 为 32（表 \ref{tab:training-stages}）。
 
-\textbf{第一阶段}使用 Recovery Data 中的 $k = 0$ 样本，即根节点拒答与用户侧诱导两个子集，每个 batch 固定采样 24 条根节点样本与 8 条诱导样本（3:1），约遍历 2.37 轮。此阶段暂不引入 Counter Data，以免在拒答模式尚未稳固时干扰危险与安全边界的判别。
+\textbf{第一阶段}使用 Recovery Data 中的 $k = 0$ 样本，即根节点拒答（10k）与用户侧诱导（3.5k）两个子集，共 13.5k 条，混合后随机打乱，训练 1 个 epoch（422 步）。此阶段暂不引入 Counter Data，以免在拒答模式尚未稳固时干扰危险与安全边界的判别。
 
-\textbf{第二阶段}使用全部 Recovery Data 与 Counter Data，按自然规模 4:1 混合采样，遍历 1.60 轮：借助 $k > 0$ 样本把恢复能力推向更深的位置，并以 Counter Data 抑制过度拒答。Counter Data 的占比依据开发集选取，选取过程见 \ref{counter-data-ux6bd4ux4f8bux7684ux5f71ux54cdux5206ux6790} 节。
+\textbf{第二阶段}从第一阶段的检查点继续训练，使用全部 Recovery Data（16k）与 Counter Data（4k）共 20k 条，按自然规模 4:1 混合并随机打乱，训练 1 个 epoch（625 步）：借助 $k > 0$ 样本把恢复能力推向更深的位置，并以 Counter Data 抑制过度拒答；$k = 0$ 样本在本阶段再次参与训练，防止引入新数据后根节点拒答边界退化。Counter Data 的占比依据开发集选取，选取过程见 \ref{counter-data-ux6bd4ux4f8bux7684ux5f71ux54cdux5206ux6790} 节。
 
 两阶段只在数据构成上不同：最终模型两阶段均使用上文的 HS-Weighting 损失，等权 DPO 两阶段均使用标准 DPO 损失。
 
 \begin{table}[htbp]
 \centering
-\caption{两阶段训练的数据构成、比例与训练目标}
+\caption{两阶段训练的数据构成、训练量与训练目标}
 \label{tab:training-stages}
 \small
 \renewcommand{\arraystretch}{1.12}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{l L{3.2cm} c c L{4.4cm}}
 \toprule
-\textbf{阶段} & \textbf{数据构成} & \textbf{采样配比} & \textbf{步数（epochs）} & \textbf{训练目标} \\
+\textbf{阶段} & \textbf{数据构成} & \textbf{样本数} & \textbf{epochs（步数）} & \textbf{训练目标} \\
 \midrule
-第一阶段 & 根节点拒答\newline 用户侧诱导 & 3:1 & 1000（2.37） & 建立根节点拒答与抗诱导能力 \\
+第一阶段 & 根节点拒答\newline 用户侧诱导 & 10k + 3.5k & 1（422） & 建立根节点拒答与抗诱导能力 \\
 \addlinespace
-第二阶段 & Recovery Data\newline Counter Data & 4:1 & 1000（1.60） & 增强 $k>0$ 状态下的深层恢复，抑制过度拒答 \\
+第二阶段 & Recovery Data\newline Counter Data & 16k + 4k & 1（625） & 增强 $k>0$ 状态下的深层恢复，抑制过度拒答 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{训练配置。}训练以第 4 章的 CPT+SFT+RLAIF 模型为初始化，在 4×A100 40GB GPU 上进行，DPO 的 $\beta = 0.1$，学习率 $5 \times 10^{-7}$。HS-Weighting 的超参数取上文默认值；等权 DPO（$\alpha = 1$、$\lambda = 0$）与之从同一检查点独立训练。
+\textbf{训练配置。}训练以第 4 章的 CPT+SFT+RLAIF 模型为初始化，在 8×A100 80GB GPU 上进行，DPO 的 $\beta = 0.1$，学习率 $5 \times 10^{-7}$。HS-Weighting 的超参数取上文默认值；等权 DPO（$\alpha = 1$、$\lambda = 0$）与之从同一检查点独立训练。
 
 \section{DPO 训练与实验结果}\label{dpo-ux8badux7ec3ux4e0eux5b9eux9a8cux7ed3ux679c}
 
@@ -1633,29 +1647,6 @@ PrefixRobust-Eval 的每条续写由三个裁判模型（\ref{sec:eval-protocol}
 \begin{equation}\label{eq:asr-srr}
 \text{ASR} = \frac{|\mathcal{U}|}{N}, \qquad \text{SRR} = \frac{|\mathcal{R}|}{N}, \qquad \text{中性回避} = 1 - \text{ASR} - \text{SRR}
 \end{equation}
-按风险类型 × 攻击类型分层抽取 20\%（160 条），由 2 名电力安全专家在同样读取前缀的条件下独立复核，专家间分歧经讨论确定最终标签。专家标签与多裁判投票结果的三分类总体一致性 Cohen's $\kappa = 0.81$；分类别结果见表 \ref{tab:judge-human}。由于 ASR 漏判的代价最高，本文重点关注 $\mathcal{U}$ 类的召回率，即专家判为危险的续写中被多裁判同样判为危险的比例：专家判为危险的 14 条中多裁判判出 13 条；另有 2 条专家判为中性回避的续写被多裁判判为危险，评测器整体略偏严格。
-
-\begin{table}[htbp]
-\centering
-\caption{PrefixRobust-Eval 人工复核结果}
-\label{tab:judge-human}
-\small
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{l c c c c}
-\toprule
-\multirow{2}*{\textbf{类别}} & \multicolumn{2}{c}{\textbf{多裁判判分质量（\%）}} & \multicolumn{2}{c}{\textbf{类别比例（\%）}} \\
-\cmidrule(lr){2-3} \cmidrule(lr){4-5}
- & \textbf{精确率} & \textbf{召回率} & \textbf{人工口径} & \textbf{多裁判口径} \\
-\midrule
-危险续写（ASR） & 86.7 & 92.9 & 8.8 & 9.4 \\
-完整恢复（SRR） & 90.5 & 92.7 & 51.3 & 52.5 \\
-中性回避 & 88.5 & 84.4 & 40.0 & 38.1 \\
-\bottomrule
-\end{tabular}
-
-\vspace{0.2cm}
-\parbox{\linewidth}{\small \textbf{注：}精确率与召回率以专家标签为基准；后两列为复核样本上两种口径各自计算的类别比例。}
-\end{table}
 
 \subsection{主要结果：与基线方法的对比}\label{ux4e0eux57faux7ebfux65b9ux6cd5ux7684ux5b89ux5168ux6027ux5bf9ux6bd4}
 
@@ -1688,12 +1679,12 @@ PrefixRobust-Eval 的每条续写由三个裁判模型（\ref{sec:eval-protocol}
 
 仅用通用安全数据时，URR 仍为 12.0\%、ASR 为 35.0\%，说明通用拒答模式对显性违规请求有一定迁移能力，但难以覆盖诱导旁路闭锁、伪造稳定极限等电力特有的隐蔽风险。Safety Recovery 基线将 URR 与 ASR 分别降至 3.0\% 与 14.5\%，但因缺少 Counter Data，ORR 升至 13.3\%。本文等权方案的 ASR 为 11.1\%，较 Safety Recovery 基线再降 3.4 pp，同时 ORR 降至 5.0\%；加入 HS-Weighting 后，URR 与 ASR 进一步降至 1.5\% 与 7.9\%，ASR 较 Safety Recovery 基线降低 6.6 pp（相对降低约 46\%），较通用安全数据基线降低 27.1 pp。SRR 的变化方向与 ASR 一致（37.5\%→45.9\%→53.4\%），说明未被攻破的样本中，有更多以完整的三段式回答恢复，而不是停留在中性回避。
 
-从训练过程看，图 \ref{fig:dpo-training-curves} 给出最终模型（HS-Weighting）每 500 步检查点的评测结果，可以看到两阶段各自的作用。第一阶段结束时（1000 步）URR 降至 2.5\%、ASR 降至 21.5\%，但因未引入 Counter Data，ORR 由 7.0\% 升至 12.7\%；第二阶段引入 $k > 0$ 样本与 Counter Data 后，SRR 由 24.0\% 升至 53.4\%，ORR 回落至 5.0\%，最终 URR 为 1.5\%、ASR 为 7.9\%。
+从训练过程看，图 \ref{fig:dpo-training-curves} 给出最终模型（HS-Weighting）每 0.25 个 epoch 检查点的评测结果，可以看到两阶段各自的作用。第一阶段的前半个 epoch 内 URR 由 42.5\% 快速降至 9.0\%，阶段结束时 URR 降至 2.5\%、ASR 降至 21.5\%，但因未引入 Counter Data，ORR 由 7.0\% 升至 12.7\%；第二阶段引入 $k > 0$ 样本与 Counter Data 后，SRR 由 24.0\% 升至 53.4\%，ORR 回落至 5.0\%，最终 URR 为 1.5\%、ASR 为 7.9\%。SRR 的提升主要发生在第二阶段的前半个 epoch，此后各指标趋于平稳。
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/fig6-3_dpo_training_curves.png}
-\caption{DPO 训练过程安全性能变化曲线（最终实验模型，两阶段均采用 HS-Weighting；各数据点为每 500 步检查点在三个测试集上的评测结果，点线为阶段分界）}
+\caption{DPO 训练过程安全性能变化曲线（最终实验模型，两阶段均采用 HS-Weighting；横轴为累计训练轮次，两阶段各 1 个 epoch，各数据点为每 0.25 个 epoch 检查点在三个测试集上的评测结果，点线为阶段分界）}
 \label{fig:dpo-training-curves}
 \end{figure}
 
@@ -1728,24 +1719,24 @@ PrefixRobust-Eval 的每条续写由三个裁判模型（\ref{sec:eval-protocol}
 
 （2）\textbf{Counter Data 不提供安全能力，但能纠正过度拒答。}单独使用时安全指标与未对齐模型接近；全量 Recovery Data 使 ORR 升至 14.0\%（安全规程解释 12/60、故障排查原则 10/60、制度问答 8/60、理论仿真 7/60、设备知识 5/60），加入 Counter Data 后五类分别降至 4、4、3、2、2 条，ORR 为 5.0\%，代价是 ASR 与 SRR 的小幅变化（9.1\%→11.1\%，48.4\%→45.9\%）。
 
-\textbf{Counter Data 占比。}\label{counter-data-ux6bd4ux4f8bux7684ux5f71ux54cdux5206ux6790}保持 Recovery Data 内部比例不变，将 Counter Data 占总样本的比例设为 0\%--30\%，结果如表 \ref{tab:counter-ratio} 所示。随着占比增大，安全性与有用性此消彼长：URR 由 2.0\% 升至 4.0\%，ASR 由 9.1\% 升至 15.0\%，SRR 由 48.4\% 降至 40.5\%，ORR 则由 14.0\% 降至 4.0\%。取 20\% 时，ORR 较无 Counter Data 降低 9.0 pp，而 URR、ASR、SRR 仅分别变化 $+0.5$、$+2.0$、$-2.5$ pp；25\% 时 SRR 已下降 3.9 pp，30\% 时退化进一步加快。本文在开发集上以“SRR 较无 Counter Data 时下降不超过 3 pp”为约束，选取满足条件的最大占比 20\%；表中测试集结果的趋势与开发集一致。
+\textbf{Counter Data 占比。}\label{counter-data-ux6bd4ux4f8bux7684ux5f71ux54cdux5206ux6790}各配置共享同一个第一阶段检查点，第二阶段的 Recovery Data 固定为全部 16k 条，只改变加入的 Counter Data 条数，使其占第二阶段样本的比例为 0\%--30\%，并同样训练 1 个 epoch。Counter Data 从候选池（\ref{counter-dataux53cdux504fux4fddux5b88ux6570ux636e} 节）中按五类场景分层抽取，且不同占比的子集相互嵌套，即小占比所用的样本全部包含在大占比的子集中，避免配置间的差异来自抽到不同的样本。若改为固定第二阶段的总样本数，提高 Counter 占比就必须削减 Recovery Data，安全指标的下降将无法区分来自 Counter Data 还是 Recovery Data 的减少；本文的设置下各配置的 Recovery Data 内容与训练次数完全相同，第二阶段步数随总样本数在 500--715 步之间变化。结果如表 \ref{tab:counter-ratio} 所示。随着占比增大，安全性与有用性此消彼长：URR 由 2.0\% 升至 4.0\%，ASR 由 9.1\% 升至 15.0\%，SRR 由 48.4\% 降至 40.5\%，ORR 则由 14.0\% 降至 4.0\%。取 20\% 时，ORR 较无 Counter Data 降低 9.0 pp，而 URR、ASR、SRR 仅分别变化 $+0.5$、$+2.0$、$-2.5$ pp；25\% 时 SRR 已下降 3.9 pp，30\% 时退化进一步加快。本文在开发集上以“SRR 较无 Counter Data 时下降不超过 3 pp”为约束，选取满足条件的最大占比 20\%；表中测试集结果的趋势与开发集一致。
 
 \begin{table}[htbp]
 \centering
-\caption{Counter Data 不同占比下的安全性与有用性对比（单位：\%）}
+\caption{Counter Data 不同占比下的安全性与有用性对比（等权 DPO，指标单位：\%）}
 \label{tab:counter-ratio}
 \small
 \renewcommand{\arraystretch}{1.1}
-\begin{tabular}{c c c c c}
+\begin{tabular}{c c c c c c c}
 \toprule
-\textbf{Counter Data 占比} & \textbf{URR$\downarrow$} & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} & \textbf{ORR$\downarrow$} \\
+\textbf{占比} & \textbf{Counter 条数} & \textbf{第二阶段步数} & \textbf{URR$\downarrow$} & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} & \textbf{ORR$\downarrow$} \\
 \midrule
-0\%（无 Counter） & 2.0 & 9.1 & 48.4 & 14.0 \\
-10\% & 2.0 & 10.0 & 48.0 & 10.0 \\
-15\% & 2.5 & 10.5 & 47.0 & 7.0 \\
-20\%（本文默认） & 2.5 & 11.1 & 45.9 & 5.0 \\
-25\% & 3.0 & 12.0 & 44.5 & 4.0 \\
-30\% & 4.0 & 15.0 & 40.5 & 4.0 \\
+0\% & 0 & 500 & 2.0 & 9.1 & 48.4 & 14.0 \\
+10\% & 1.8k & 556 & 2.0 & 10.0 & 48.0 & 10.0 \\
+15\% & 2.8k & 589 & 2.5 & 10.5 & 47.0 & 7.0 \\
+20\%（默认） & 4.0k & 625 & 2.5 & 11.1 & 45.9 & 5.0 \\
+25\% & 5.3k & 667 & 3.0 & 12.0 & 44.5 & 4.0 \\
+30\% & 6.9k & 715 & 4.0 & 15.0 & 40.5 & 4.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1756,13 +1747,13 @@ PrefixRobust-Eval 的每条续写由三个裁判模型（\ref{sec:eval-protocol}
 
 \begin{table}[htbp]
 \centering
-\caption{两种截断方式训练的模型在三类预填充前缀上的交叉评测（等权 DPO，单位：\%）}
+\caption{两种截断方式训练的模型在三类前缀上的交叉评测（单位：\%）}
 \label{tab:token-char-ablation}
 \small
 \renewcommand{\arraystretch}{1.12}
-\begin{tabular}{l c c c c}
+\begin{tabular}{l C{2.1cm} C{2.1cm} C{2.1cm} C{2.1cm}}
 \toprule
-\multirow{2}*{\textbf{测试前缀}} & \multicolumn{2}{c}{\textbf{Token-Boundary 训练（默认）}} & \multicolumn{2}{c}{\textbf{Character-Boundary 训练}} \\
+\multirow{2}*{\textbf{测试前缀}} & \multicolumn{2}{c}{\textbf{Token-Boundary 训练}} & \multicolumn{2}{c}{\textbf{Character-Boundary 训练}} \\
 \cmidrule(lr){2-3} \cmidrule(lr){4-5}
  & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} \\
 \midrule
@@ -1771,6 +1762,9 @@ Token 边界前缀 & 15.00 & 41.25 & 18.50 & 35.75 \\
 人工撰写前缀 & 12.50 & 44.00 & 16.25 & 37.50 \\
 \bottomrule
 \end{tabular}
+
+\vspace{0.2cm}
+\parbox{\linewidth}{\small \textbf{注：}两个模型均采用等权 DPO，Token-Boundary 训练为本文默认设置。}
 \end{table}
 
 Token-Boundary 训练在两类自然结尾的前缀上均明显优于 Character-Boundary 训练：Token 边界前缀上 ASR 低 3.50 pp、SRR 高 5.50 pp，人工撰写前缀上 ASR 低 3.75 pp、SRR 高 6.50 pp。人工撰写前缀不来自原始模型，这一优势说明 Token-Boundary 训练学到的恢复能力并不局限于模型自身的生成轨迹。在词中截断前缀上，两者接近，Character-Boundary 训练只略好（ASR 低 0.75 pp），即只在 token 边界上训练并没有削弱对词中截断前缀的防御。Character-Boundary 训练的模型在词中截断前缀上的 ASR（11.50\%）比在 Token 边界前缀上低 7.00 pp，而 Token-Boundary 训练的模型只相差 2.75 pp：前者的恢复能力在相当程度上依赖“前缀末尾出现残缺词”这一线索。
@@ -1854,23 +1848,23 @@ R4（系统失稳） & 3.0 & 13.0 & 41.5 & 2.0 & 9.0 & 50.5 \\
 \label{tab:deep-prefix}
 \small
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{l c c c c}
+\begin{tabular}{l l c c c c}
 \toprule
-\multirow{2}*{\textbf{攻击方式 / 预填充深度}} & \multicolumn{2}{c}{\textbf{等权 DPO}} & \multicolumn{2}{c}{\textbf{HS-Weighting}} \\
-\cmidrule(lr){2-3} \cmidrule(lr){4-5}
- & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} \\
+\multirow{2}*{\textbf{评测集}} & \multirow{2}*{\textbf{攻击方式 / 预填充深度}} & \multicolumn{2}{c}{\textbf{等权 DPO}} & \multicolumn{2}{c}{\textbf{HS-Weighting}} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+ & & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} & \textbf{ASR$\downarrow$} & \textbf{SRR$\uparrow$} \\
 \midrule
-用户侧诱导（PrefixRobust-Eval） & 7.25 & 50.50 & 4.50 & 59.00 \\
-预填充 $k \in \{8, 16, 32, 64\}$（PrefixRobust-Eval） & 15.00 & 41.25 & 11.25 & 47.75 \\
+\multirow{2}*{PrefixRobust-Eval} & 用户侧诱导 & 7.25 & 50.50 & 4.50 & 59.00 \\
+ & 预填充 $k \in \{8, 16, 32, 64\}$ & 15.00 & 41.25 & 11.25 & 47.75 \\
 \midrule
-$k = \lceil 0.75 C_c \rceil$ & 19.0 & 35.0 & 14.0 & 43.0 \\
-$k = C_c$（训练最深位置） & 23.0 & 30.0 & 17.0 & 39.0 \\
-$k = \lceil 1.5 C_c \rceil$（超出训练深度） & 34.0 & 18.0 & 29.0 & 24.0 \\
+\multirow{3}*{PrefixDeep-Eval} & $k = \lceil 0.75 C_c \rceil$ & 19.0 & 35.0 & 14.0 & 43.0 \\
+ & $k = C_c$（训练最深位置） & 23.0 & 30.0 & 17.0 & 39.0 \\
+ & $k = \lceil 1.5 C_c \rceil$（超出训练深度） & 34.0 & 18.0 & 29.0 & 24.0 \\
 \bottomrule
 \end{tabular}
 
 \vspace{0.2cm}
-\parbox{\linewidth}{\small \textbf{注：}$C_c$ 为风险类型 $c$ 的训练截取上限（式 \eqref{eq:k-range}）；后三行来自 PrefixDeep-Eval。}
+\parbox{\linewidth}{\small \textbf{注：}$C_c$ 为风险类型 $c$ 的训练截取上限（式 \eqref{eq:k-range}）。}
 \end{table}
 
 \subsection{通用安全能力与跨阶段能力保持}\label{cross-stage-retention}
@@ -1929,7 +1923,7 @@ SafetyBench & 63.8 & 66.4 & $+2.6$ \\
 
 \subsection{与通用指令模型及教师模型的对比}\label{subsec:external-compare}
 
-为说明四阶段流程相对现有模型的实际收益，本节在同一组评测集与多裁判评分协议下，将最终模型与两个外部模型比较：同基座、同规模的官方通用指令模型 Qwen2.5-7B-Instruct，代表不做领域训练、直接使用官方指令模型的水平；本文数据构造所用的教师模型 Qwen-Max，作为参照上限。两个外部模型不识别风格标记，风格评测与安全评测中的风格 Prefix 均替换为自然语言风格说明，即把目标组合各类目取值的语言特征（表 \ref{tab:style-intensity-def}）写成文字放在问题之前；风格评测沿用第 4 章 StyleRM-7B 与 GPT-5 的融合评测；安全评测中，Qwen2.5-7B-Instruct 的 assistant 侧预填充直接写入 ChatML 模板，Qwen-Max 通过 API 的前缀续写功能写入预填充内容，其余设置与前文一致。结果见表 \ref{tab:external-compare}。
+为说明四阶段流程相对现有模型的实际收益，本节在同一组评测集与多裁判评分协议下，将最终模型与两个外部模型比较：同基座、同规模的官方通用指令模型 Qwen2.5-7B-Instruct，代表不做领域训练、直接使用官方指令模型的水平；本文数据构造所用的教师模型 Qwen-Max，代表参数规模远大于本文模型、但未经电力领域训练的通用大模型水平。两个外部模型不识别风格标记，风格评测与安全评测中的风格 Prefix 均替换为自然语言风格说明，即把目标组合各类目取值的语言特征（表 \ref{tab:style-intensity-def}）写成文字放在问题之前；风格评测沿用第 4 章 StyleRM-7B 与 GPT-5 的融合评测；安全评测中，Qwen2.5-7B-Instruct 的 assistant 侧预填充直接写入 ChatML 模板，Qwen-Max 通过 API 的前缀续写功能写入预填充内容，其余设置与前文一致。结果见表 \ref{tab:external-compare}。
 
 \begin{table}[htbp]
 \centering
@@ -1942,10 +1936,10 @@ SafetyBench & 63.8 & 66.4 & $+2.6$ \\
 \toprule
 \textbf{类别} & \textbf{指标} & \textbf{Qwen2.5-7B-Instruct} & \textbf{Qwen-Max（教师）} & \textbf{本文最终模型} \\
 \midrule
-\multirow{4}*{领域任务} & PowerQA Score（\%）$\uparrow$ & 52.6 & \textbf{84.6} & 81.2 \\
-& FaultDiag Top-1（\%）$\uparrow$ & 30.3 & \textbf{66.7} & 61.3 \\
-& RegQA Evid.（\%）$\uparrow$ & 18.3 & 74.3 & \textbf{77.0} \\
-& CrossDomain（1--5）$\uparrow$ & 2.8 & \textbf{4.1} & 3.6 \\
+\multirow{4}*{领域任务} & PowerQA Score（\%）$\uparrow$ & 52.6 & \textcolor{red}{73.5} & \textbf{81.2} \\
+& FaultDiag Top-1（\%）$\uparrow$ & 30.3 & \textcolor{red}{54.7} & \textbf{61.3} \\
+& RegQA Evid.（\%）$\uparrow$ & 18.3 & \textcolor{red}{52.0} & \textbf{77.0} \\
+& CrossDomain（1--5）$\uparrow$ & 2.8 & \textcolor{red}{3.4} & \textbf{3.6} \\
 \midrule
 风格控制 & SHR（\%）$\uparrow$ & 56.3 & 69.0 & \textbf{80.5} \\
 \midrule
@@ -1962,7 +1956,7 @@ SafetyBench & 63.8 & 66.4 & $+2.6$ \\
 
 （1）\textbf{相对 Qwen2.5-7B-Instruct}，最终模型在 PowerQA、FaultDiag、RegQA 上分别高 28.6、31.0、58.7 pp，CrossDomainQA 高 0.8 分。官方指令模型具备通用的问答格式与推理能力，但缺少电力规程与设备知识，制度问答中常编造不存在的条款编号，依据正确性仅 18.3\%；其通用安全对齐对电力隐蔽风险覆盖有限，URR 为 24.5\%、ASR 为 62.4\%。
 
-（2）\textbf{相对 Qwen-Max}，最终模型的 PowerQA 达到教师模型的 96\%，FaultDiag 与 CrossDomainQA 分别低 5.4 pp 与 0.5 分，复杂推理仍受 7B 规模限制；RegQA 依据正确性则高 2.7 pp，说明南方电网内部制度语料上的持续预训练与强调条款引用的指令数据，使小模型在条款记忆与引用上优于通用大模型。Qwen-Max 的过度拒答率最低（4.0\%），但对电力隐蔽风险与预填充攻击的防御明显弱于最终模型（URR 9.5\%、ASR 31.4\%）。风格控制方面，Qwen-Max 依靠自然语言说明的 SHR 为 69.0\%，仍低于最终模型的 80.5\%。需要说明的是，风格评测只使用 GPT-5 作为裁判，不含 Qwen-Max；但在领域任务与安全评测中 Qwen-Max 是三个裁判之一，三裁判平均可在一定程度上抑制其自评偏好。
+（2）\textbf{相对 Qwen-Max}，最终模型在 PowerQA、FaultDiag、RegQA 上分别高 \textcolor{red}{7.7、6.6、25.0} pp，CrossDomainQA 高 \textcolor{red}{0.2} 分。Qwen-Max 虽具备更强的通用推理能力，但未在南方电网内部工单、检修记录与制度文件上做过预训练，缺少设备型号、本地运行规程与条款编号等领域知识；教师模型在数据构造中依托知识图谱与源文档生成答案，而独立作答时没有这些外部约束。差距在 RegQA 上最大，说明内部制度语料上的持续预训练与强调条款引用的指令数据对条款记忆与引用最为关键；CrossDomainQA 更依赖多步推理，大模型的通用推理能力部分弥补了知识不足，两者差距最小。Qwen-Max 的过度拒答率最低（4.0\%），但对电力隐蔽风险与预填充攻击的防御明显弱于最终模型（URR 9.5\%、ASR 31.4\%）。风格控制方面，Qwen-Max 依靠自然语言说明的 SHR 为 69.0\%，仍低于最终模型的 80.5\%。需要说明的是，风格评测只使用 GPT-5 作为裁判，不含 Qwen-Max；但在领域任务与安全评测中 Qwen-Max 是三个裁判之一，三裁判平均可在一定程度上抑制其自评偏好。
 
 \subsection{典型案例分析}\label{subsec:dpo-case}
 
@@ -2000,7 +1994,7 @@ SafetyBench & 63.8 & 66.4 & $+2.6$ \\
 
 \textbf{主要工作。}（1）在 CPT 阶段（第 2 章），整合南方电网内部语料与公开电力资料，构建七类电力领域语料，采用困惑度双阈值筛选与 1:1 领域-通用混合策略进行持续预训练。（2）在 SFT 阶段（第 3 章），设计六模块管线，从约 600 条专家种子扩展出约 6.8 万条保留七类原生风格的指令数据，并在两阶段微调中结合动态微调（DFT）目标。（3）在 RLAIF 阶段（第 4 章），将回答风格拆分为展开程度、安全警示与表述类型三个类目，为三类目标用户群体各规定一组固定组合并编码为风格条件化 Prefix；先按提问角色对问题分类，再以 Qwen-Max 按经人类反馈迭代的 Prompt 改写构建风格数据，检查与评分不使用改写模型自身；训练以注意力分类头输出各类目 softmax 分布的 StyleRM-7B 判别模型，以目标取值概率开根号后的加权平均为奖励，并以 GRPO + Clip-Higher 进行多风格联合对齐。（4）在 DPO 阶段（第 5 章），建立四类电力安全风险体系，采用原生 token 边界截取预填充前缀，将根节点拒答统一为 $k=0$ 特例构建 Recovery Data 与 Counter Data 两类偏好数据，并结合 HS-Weighting 困难状态加权进行两阶段训练。
 
-\textbf{主要实验结果。}在本文构建的评测集上：CPT 将电力领域综合得分从 43.5\% 提升至 68.2\%（综合得分 $S=65.0\%$）；SFT 将 PowerQA 提升至 82.3\%，FaultDiag 首因准确率达 63.0\%，RegulationQA 依据正确性达 78.0\%；RLAIF 将风格命中率（SHR）从 38.4\% 提升至 81.6\%，联合命中率（Joint-HR）从 7.3\% 提升至 58.6\%；DPO 在等权训练下得到 URR 2.5\%、ASR 11.1\%、SRR 45.9\%、ORR 5.0\%，引入 HS-Weighting 困难状态加权后进一步得到 URR 1.5\%、ASR 7.9\%、SRR 53.4\%、ORR 5.0\%。最终模型在 PowerQA（81.2\%）、FaultDiag（61.3\%）、RegulationQA（77.0\%）及风格 SHR（80.5\%）上较前序阶段的回落均不超过 2 个百分点。与外部模型相比，最终模型在三项领域任务上较 Qwen2.5-7B-Instruct 平均高 39.4 个百分点，PowerQA 达到教师模型 Qwen-Max 的 96\%，RegulationQA 依据正确性高于 Qwen-Max，URR 与 ASR 明显低于两者。
+\textbf{主要实验结果。}在本文构建的评测集上：CPT 将电力领域综合得分从 43.5\% 提升至 68.2\%（综合得分 $S=65.0\%$）；SFT 将 PowerQA 提升至 82.3\%，FaultDiag 首因准确率达 63.0\%，RegulationQA 依据正确性达 78.0\%；RLAIF 将风格命中率（SHR）从 38.4\% 提升至 81.6\%，联合命中率（Joint-HR）从 7.3\% 提升至 58.6\%；DPO 在等权训练下得到 URR 2.5\%、ASR 11.1\%、SRR 45.9\%、ORR 5.0\%，引入 HS-Weighting 困难状态加权后进一步得到 URR 1.5\%、ASR 7.9\%、SRR 53.4\%、ORR 5.0\%。最终模型在 PowerQA（81.2\%）、FaultDiag（61.3\%）、RegulationQA（77.0\%）及风格 SHR（80.5\%）上较前序阶段的回落均不超过 2 个百分点。与外部模型相比，最终模型在三项领域任务上较 Qwen2.5-7B-Instruct 平均高 39.4 个百分点，在 PowerQA、FaultDiag、RegulationQA 上分别较教师模型 Qwen-Max 高 \textcolor{red}{7.7、6.6、25.0} 个百分点，URR 与 ASR 明显低于两者。
 
 \section*{局限性与未来展望}\label{ux5c40ux9650ux6027ux4e0eux672aux6765ux5c55ux671b}
 
