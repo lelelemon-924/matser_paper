@@ -1,0 +1,154 @@
+\documentclass[11pt, tikz, border=12pt]{standalone}
+\usepackage[fontset=fandol]{ctex}
+\usetikzlibrary{positioning, shadows, arrows.meta, backgrounds, calc, fit}
+
+\definecolor{cSeed}{RGB}{204, 112, 34}
+\definecolor{cLogic}{RGB}{196, 150, 24}
+\definecolor{cCorp}{RGB}{64, 128, 186}
+\definecolor{cKG}{RGB}{44, 108, 162}
+\definecolor{cGen}{RGB}{38, 148, 128}
+\definecolor{cEvo}{RGB}{136, 84, 162}
+\definecolor{cFil}{RGB}{62, 82, 102}
+\definecolor{cOut}{RGB}{46, 142, 84}
+\definecolor{bgGray}{RGB}{247, 249, 251}
+
+% #1 颜色  #2 文字宽度  #3 图标  #4 标题  #5 说明
+\newcommand{\cardbox}[5]{%
+    \begin{minipage}[c]{0.95cm}
+        \centering
+        \tikz[baseline=-0.5ex]{
+            \fill[#1, rounded corners=3pt] (-0.38,-0.38) rectangle (0.38,0.38);
+            \begin{scope}[draw=white, thick, line cap=round, line join=round, scale=1.15]
+                #3
+            \end{scope}
+        }
+    \end{minipage}%
+    \hspace{2mm}%
+    \begin{minipage}[c]{#2}
+        \raggedright
+        \textbf{\fontsize{9.8pt}{12pt}\selectfont\textcolor{black!88}{#4}}\\[3pt]
+        {\fontsize{8pt}{10.5pt}\selectfont\color{black!62}#5}
+    \end{minipage}%
+}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily,
+    card/.style={draw=black!18, fill=white, thick, rounded corners=5pt, inner sep=7pt, minimum height=1.55cm},
+    arrow/.style={-{Latex[scale=1.08]}, thick, draw=black!50},
+    branch/.style={thick, draw=black!50},
+    stagebox/.style 2 args={draw=#1, fill=#2, dashed, thick, rounded corners=6pt},
+    zoneTitle/.style={font=\footnotesize\bfseries, anchor=north west, inner sep=2pt}
+]
+
+% ---------------- 阶段一：两列输入 ----------------
+\node[card] (seeds) at (-3.25, 0) {
+    \cardbox{cSeed}{4.1cm}{
+        \draw (-0.15,-0.15) -- (0.15,0.15);
+        \draw (-0.15,0.15) -- (0.15,-0.15);
+        \draw (0,-0.2) -- (0,0.2);
+        \draw (-0.2,0) -- (0.2,0);
+    }{模块一：专家种子构建}{七类业务场景约 600 条种子问答}
+};
+
+\node[card] (corpus) at (3.25, 0) {
+    \cardbox{cCorp}{4.1cm}{
+        \draw (-0.12,-0.12) rectangle (0.12,0.16);
+        \draw (-0.06,0.05) -- (0.06,0.05);
+        \draw (-0.06,-0.03) -- (0.06,-0.03);
+    }{预处理后的电力语料}{第 2 章七类标签文本切片}
+};
+
+\node[card, below=0.8cm of seeds] (logic) {
+    \cardbox{cLogic}{4.1cm}{
+        \draw (-0.12,-0.15) rectangle (0.12,0.15);
+        \draw (0,0) circle (0.05);
+        \draw (-0.05,0)--(-0.1,0);
+        \draw (0.05,0)--(0.1,0);
+    }{模块二：设计逻辑提取}{逻辑模板 $\ell = (\tau, K, \sigma, \phi)$}
+};
+
+\node[card, below=0.8cm of corpus] (kg) {
+    \cardbox{cKG}{4.1cm}{
+        \fill (0,0.12) circle(0.04);
+        \fill (-0.12,-0.1) circle(0.04);
+        \fill (0.12,-0.1) circle(0.04);
+        \draw (0,0.12)--(-0.12,-0.1)--(0.12,-0.1)--cycle;
+    }{模块三：知识图谱构建}{LLM 抽取校验 4.2 万条\\三元组，补充逆关系，\\排除评测文档}
+};
+
+% 汇合线位于阶段一内部，阶段二标题位于左侧，避免与中轴箭头交叠
+\coordinate (bridge) at ($(logic.south |- kg.south) + (0,-0.45)$);
+\coordinate (stage1Bottom) at ($(bridge) + (0,-0.35)$);
+\coordinate (stage2Top) at ($(stage1Bottom) + (0,-0.3)$);
+
+% ---------------- 阶段二：生成与演化 ----------------
+\node[card, anchor=north] (gen) at ($(0,0 |- stage2Top) + (0,-0.75)$) {
+    \cardbox{cGen}{8.4cm}{
+        \draw (-0.15,0.15) -- (0.15,0.15) -- (0.06,0)
+              -- (0.06,-0.15) -- (-0.06,-0.15) -- (-0.06,0) -- cycle;
+    }{模块四：图遍历指令生成}{沿知识需求链采样类型与关系均匹配的有向路径，按模板生成问答}
+};
+
+\node[card, below=0.8cm of gen] (evo) {
+    \cardbox{cEvo}{8.4cm}{
+        \draw[->] (-0.15,-0.15) -- (0.15,0.15);
+        \draw (-0.15,-0.05) -- (0.05,-0.05) -- (0.05,-0.15);
+        \fill (0.15,0.15) circle (0.03);
+    }{模块五：指令演化}{施加五类演化操作提升复杂度，并同步重写答案}
+};
+
+\coordinate (stage2Bottom) at ($(evo.south) + (0,-0.4)$);
+\coordinate (stage3Top) at ($(stage2Bottom) + (0,-0.3)$);
+
+% ---------------- 阶段三：筛选与产出 ----------------
+\node[card, anchor=north] (filter) at ($(0,0 |- stage3Top) + (0,-0.75)$) {
+    \cardbox{cFil}{8.4cm}{
+        \draw (0,-0.18) -- (0.15,0) -- (0.15,0.18)
+              -- (-0.15,0.18) -- (-0.15,0) -- cycle;
+        \draw (-0.05,0) -- (0,-0.05) -- (0.08,0.06);
+    }{模块六：自动化质量筛选}{四维加权评分（Qwen-Max 校准权重，$Q \ge 0.75$），\\冲突断言、事实支持率与合规性一票否决，重复簇内择优去重}
+};
+
+\node[card, below=0.8cm of filter] (output) {
+    \cardbox{cOut}{8.4cm}{
+        \draw (-0.15,0.08) arc (180:360:0.15 and 0.05);
+        \draw (-0.15,0.08) arc (180:0:0.15 and 0.05);
+        \draw (-0.15,-0.04) arc (180:360:0.15 and 0.05);
+        \draw (-0.15,-0.16) arc (180:360:0.15 and 0.05);
+        \draw (-0.15,0.08) -- (-0.15,-0.16);
+        \draw (0.15,0.08) -- (0.15,-0.16);
+    }{SFT 指令数据集（约 6.8 万条）}{覆盖四类核心任务与三级难度，保留七类数据原生风格}
+};
+
+% ---------------- 背景阶段框 ----------------
+\coordinate (L) at (-6.55, 0);
+\coordinate (R) at ( 6.55, 0);
+\coordinate (stage1Top) at ($(seeds.north) + (0,0.75)$);
+\coordinate (stage3Bottom) at ($(output.south) + (0,-0.35)$);
+
+\begin{scope}[on background layer]
+    \path[stagebox={black!18}{bgGray}] (L |- stage1Top) rectangle (R |- stage1Bottom);
+    \path[stagebox={cGen!35}{cGen!4}]  (L |- stage2Top) rectangle (R |- stage2Bottom);
+    \path[stagebox={cFil!35}{cFil!4}]  (L |- stage3Top) rectangle (R |- stage3Bottom);
+
+    \node[zoneTitle, text=black!65]        at ($(L |- stage1Top) + (3mm,-2mm)$) {阶段一：知识与逻辑准备（模块一至三）};
+    \node[zoneTitle, text=cGen!85!black]   at ($(L |- stage2Top) + (3mm,-2mm)$) {阶段二：生成与演化（模块四、五）};
+    \node[zoneTitle, text=cFil!85!black]   at ($(L |- stage3Top) + (3mm,-2mm)$) {阶段三：质量筛选（模块六）};
+\end{scope}
+
+% ---------------- 连线 ----------------
+\draw[arrow] (seeds.south) -- (logic.north);
+\draw[arrow] (corpus.south) -- (kg.north);
+
+\coordinate (merge) at (0,0 |- bridge);
+\draw[branch, rounded corners=5pt] (logic.south) -- (logic.south |- bridge) -- (merge);
+\draw[branch, rounded corners=5pt] (kg.south) -- (kg.south |- bridge) -- (merge);
+\draw[arrow] (merge) -- (gen.north);
+
+\draw[arrow] (gen.south) -- (evo.north);
+\draw[arrow] (evo.south) -- (filter.north);
+\draw[arrow] (filter.south) -- (output.north);
+
+\end{tikzpicture}
+\end{document}

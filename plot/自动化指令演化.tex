@@ -53,7 +53,7 @@
             \draw[->] (0.05,-0.01) -- (0.15, 0.12);
             \draw[->] (0.06,-0.05) -- (0.18,-0.05);
             \draw[->] (0.05,-0.09) -- (0.15,-0.22);
-        }{第一步：操作选择与策略生成}{分析认知能力维度、当前复杂度与数据类型，\\从操作集合 $\mathcal{O}$ 中选择操作及强度参数 $\theta$。}
+        }{第一步：操作选择与策略生成}{分析认知能力维度、当前复杂度与数据类型，\\从操作集合 $\mathcal{O}$ 中选择操作并确定操作强度。}
     };
 
     \node[card] (step2) at (0, -6.75) {
@@ -88,7 +88,7 @@
             \draw (-0.1,-0.1) -- (0.05,0.05);
             \draw (0.05,0.05) arc (225:45:0.08);
             \fill (0.16, 0.16) circle(0.03);
-        }{Optimizer LLM}{统计每批失败模式，\\迭代修订演化提示词。}
+        }{Optimizer LLM}{由演化 LLM 自身担任，\\统计每批失败模式，\\迭代修订演化提示词。}
     };
 
     % ---- 左侧反馈环：人工轻量介入 ----
@@ -119,6 +119,11 @@
         (step3.east) -- (optimizer.center |- step3.east)
         node[pos=0.58, edgelabel, text=cOpt!90!black] {未通过自检样本}
         -- (optimizer.south);
+
+    \draw[optarrow, rounded corners=5pt]
+        (output.east) -- ([xshift=1.1cm]optimizer.south |- output.east)
+        node[pos=0.5, edgelabel, text=cOpt!90!black] {模块六剔除样本}
+        -- ([xshift=1.1cm]optimizer.south);
 
     \draw[optarrow, rounded corners=5pt]
         (optimizer.north) -- (optimizer.center |- step1.east)

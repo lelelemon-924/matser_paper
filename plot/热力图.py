@@ -3,7 +3,7 @@
 图5-2：Token-Boundary 与 Character-Boundary 截断下的输入梯度显著性对比
 严格对齐官方 Qwen2.5-7B-Instruct 实际输入 token 序列（均为 14 个 token）：
 Token-Boundary (k=14): 解除(0.88)、安全(0.92)、保护(0.86)、规避(0.84)、开关(0.78)、系统(0.72)
-Character-Boundary (m=25 重编码为14个token): 后 3 个 token 连锁错位为 规(0.98)、避开(0.41)、关系(0.24)
+Character-Boundary (n = 25 重编码为14个token): 后 3 个 token 连锁错位为 规(0.98)、避开(0.41)、关系(0.24)
 """
 
 import os
@@ -72,7 +72,7 @@ im1 = style_heatmap(ax1, token_seq, token_grad,
 # (b) Character-Boundary 热力图
 ax2 = fig.add_subplot(gs[1])
 im2 = style_heatmap(ax2, char_reencoded_seq, char_grad,
-                    "(b) Character-Boundary 截断重编码下的归一化输入梯度显著性（m = 25，后三词错位为 [“规”, “避开”, “关系”]）")
+                    "(b) Character-Boundary 截断重编码下的归一化输入梯度显著性（n = 25，后三词错位为 [“规”, “避开”, “关系”]）")
 ax2.axvline(10.5, color="#B22222", linestyle="--", linewidth=2.0)
 
 # (c) 折线对比图
@@ -87,7 +87,7 @@ ax3.axvspan(11.5, 14.5, color="#FADBD8", alpha=0.28, label="词内截断引发�
 ax3.plot(pos_x, token_grad, marker="o", markersize=5.8, linewidth=2.2,
          color="#1f77b4", label="Token-Boundary（k = 14）")
 ax3.plot(pos_x, char_grad, marker="s", markersize=5.4, linewidth=2.0,
-         linestyle="--", color="#ff7f0e", label="Character-Boundary（m = 25）")
+         linestyle="--", color="#ff7f0e", label="Character-Boundary（n = 25）")
 
 ax3.axvline(11.5, color="#B22222", linestyle=":", linewidth=1.5, alpha=0.85)
 ax3.annotate(
@@ -127,6 +127,6 @@ cbar = fig.colorbar(im1, cax=cbar_ax)
 cbar.set_label("归一化梯度范数", fontsize=10)
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-plt.savefig(os.path.join(base_dir, "figures", "fig6_2_gradient_saliency.png"), dpi=300, bbox_inches="tight")
-plt.savefig(os.path.join(base_dir, "plot", "fig6_2_gradient_saliency.pdf"), bbox_inches="tight")
-print("Saved fig6_2_gradient_saliency.png successfully.")
+plt.savefig(os.path.join(base_dir, "figures", "fig5-3_gradient_saliency.png"), dpi=300, bbox_inches="tight")
+plt.savefig(os.path.join(base_dir, "plot", "fig5-3_gradient_saliency.pdf"), bbox_inches="tight")
+print("Saved fig5-3_gradient_saliency.png successfully.")

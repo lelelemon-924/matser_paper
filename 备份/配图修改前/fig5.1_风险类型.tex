@@ -1,0 +1,90 @@
+\documentclass[11pt, tikz, border=12pt]{standalone}
+\usepackage[fontset=fandol]{ctex}
+\usetikzlibrary{positioning, arrows.meta, backgrounds, fit, calc}
+
+\definecolor{tcyan}{RGB}{72, 122, 138}
+\definecolor{tgray}{RGB}{246, 248, 250}
+\definecolor{tdark}{RGB}{65, 70, 75}
+
+\definecolor{s1}{RGB}{72, 114, 154}
+\definecolor{s3}{RGB}{82, 142, 132}
+\definecolor{s5}{RGB}{156, 136, 88}
+\definecolor{s6}{RGB}{166, 106, 98}
+
+\pgfdeclarelayer{back}
+\pgfsetlayers{back,background,main}
+
+% #1 节点前缀  #2 x 坐标  #3 颜色  #4 图标  #5 编号  #6 名称  #7 潜在后果  #8 期望响应
+\newcommand{\riskcol}[8]{%
+    \node[anchor=north] (#1-icon) at (#2, 0) {\tikz[scale=1.15]{
+        \fill[#3!14, rounded corners=3pt] (-0.34,-0.34) rectangle (0.34,0.34);
+        \begin{scope}[draw=#3!90!black, thick, line join=round, line cap=round] #4 \end{scope}}};
+    \node[below=3pt of #1-icon, font=\small\bfseries] (#1-id) {#5};
+    \node[below=0pt of #1-id, font=\footnotesize\bfseries] (#1-name) {#6};
+    \coordinate (#1-rule) at ($(#1-name.south) + (0, -0.16)$);
+    \draw[#3!85!black, line width=0.4pt] ($(#1-rule) + (-1.55, 0)$) -- ($(#1-rule) + (1.55, 0)$);
+    \node[lab=#3, below=4pt of #1-rule] (#1-l1) {潜在后果};
+    \node[txt, below=0pt of #1-l1] (#1-c) {#7};
+    \node[lab=#3, below=3pt of #1-c] (#1-l2) {期望响应};
+    \node[txt, below=0pt of #1-l2] (#1-r) {#8};
+}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily,
+    lab/.style={font=\footnotesize\bfseries, text=#1!85!black, inner sep=2pt},
+    txt/.style={text width=3.4cm, align=flush center, inner sep=2pt, text=tdark,
+                font=\fontsize{7.5pt}{10.5pt}\selectfont},
+    riskbox/.style={draw=#1!85, fill=white, thick, rounded corners=4pt, inner sep=6pt}
+]
+
+    \def\gap{4.15}
+
+    \riskcol{r1}{0}{s1}{
+        \draw (-0.18,-0.16) -- (-0.18,0.16);
+        \draw (-0.18,-0.16) -- (0.18,-0.16);
+        \draw (-0.13,-0.08) .. controls (-0.05,0.18) and (0.02,-0.18) .. (0.15,0.10);
+    }{R1}{仿真失真与数据造假}
+    {错误结论误导运行决策\\与规划方案}
+    {基于验证理论给出建议；\\明确假设条件与适用范围}
+
+    \riskcol{r2}{\gap}{s5}{
+        \draw (-0.06,0) circle (0.11);
+        \draw (0.06,0) circle (0.11);
+        \draw (-0.26,0) -- (-0.17,0);
+        \draw (0.17,0) -- (0.26,0);
+    }{R2}{设备损毁与参数越限}
+    {绝缘击穿或热损坏；\\断路器爆炸；保护拒动}
+    {拒绝危及设备的建议；\\标注额定参数与安全\\前置条件}
+
+    \riskcol{r3}{2*\gap}{s6}{
+        \draw (0,0.11) circle (0.07);
+        \draw (-0.14,-0.17) .. controls (-0.14,0.02) and (0.14,0.02) .. (0.14,-0.17);
+    }{R3}{违章操作与人身风险}
+    {触电伤亡；高处坠落；\\电弧灼伤}
+    {严格遵循安规；\\标注前置条件与监护要求；\\拒答并引用制度依据}
+
+    \riskcol{r4}{3*\gap}{s3}{
+        \draw (-0.16,-0.12) -- (0,0.14) -- (0.16,-0.12) -- cycle;
+        \fill[s3!90!black] (-0.16,-0.12) circle (0.04);
+        \fill[s3!90!black] (0,0.14) circle (0.04);
+        \fill[s3!90!black] (0.16,-0.12) circle (0.04);
+    }{R4}{系统失稳与大面积停电}
+    {频率或电压崩溃；\\区域性大面积停电}
+    {基于稳定原理给出建议；\\明确 N-1 等约束；\\申明需结合实时状态判断}
+
+    \begin{scope}[on background layer]
+        \foreach \c/\col in {r1/s1, r2/s5, r3/s6, r4/s3} {
+            \node[riskbox=\col, fit={($(\c-icon.north) + (-1.75, 0)$) ($(\c-icon.north |- r3-r.south) + (1.75, 0)$)}] (\c-box) {};
+        }
+    \end{scope}
+
+    \begin{pgfonlayer}{back}
+        \coordinate (top) at ($(r1-box.north) + (0, 0.6cm)$);
+        \node[fit=(r1-box)(r4-box)(top), draw=tcyan!30, fill=tgray, rounded corners=5pt, inner xsep=8pt, inner ysep=7pt] (bg) {};
+        \node[anchor=north west, font=\footnotesize\bfseries, text=tcyan!85!black]
+            at ([xshift=8pt, yshift=-5pt]bg.north west) {电力安全风险类型（按模型输出被执行后的物理后果划分）};
+    \end{pgfonlayer}
+
+\end{tikzpicture}
+\end{document}

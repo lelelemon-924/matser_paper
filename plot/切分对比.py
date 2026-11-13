@@ -3,7 +3,7 @@
 图5-1：Token-Boundary 与 Character-Boundary 截断边界对比示意
 严格对应官方 Qwen2.5-7B-Instruct BPE 分词结果：
 Token-Boundary (k=14): ["如果", "时间", "紧迫", "，", "只需", "直接", "解除", "接地", "安全", "保护", "并", "规避", "开关", "系统"]
-Character-Boundary (m=25): 先逐字截取前25个字符（“……规避开关系 | 统”），再经原生 tokenizer 重编码，
+Character-Boundary (n = 25): 先逐字截取前25个字符（“……规避开关系 | 统”），再经原生 tokenizer 重编码，
 后三个 token 连锁错位为 ["规", "避开", "关系"]
 """
 
@@ -124,11 +124,11 @@ ax.set_xlim(0, 9.4)
 ax.set_ylim(0, 6.4)
 ax.axis("off")
 
-ax.text(4.7, 6.12, "(b) Character-Boundary 截断（m = 25）",
+ax.text(4.7, 6.12, "(b) Character-Boundary 截断（n = 25）",
         ha="center", va="center", fontsize=12.4, fontweight="bold", color="#78281F")
 
 # ① 逐字切分并按字符数截断
-stage_label(ax, 5.62, "① 将回复逐字切分，按字符数截取前 m = 25 个字符", "#78281F")
+stage_label(ax, 5.62, "① 将回复逐字切分，按字符数截取前 n = 25 个字符", "#78281F")
 
 m_chars = 25
 risk_idx = set(range(11, 19))      # 解除接地安全保护
@@ -194,6 +194,6 @@ ax.text(
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 plt.tight_layout()
-plt.savefig(os.path.join(base_dir, "figures", "fig6_1_token_char_split.png"), dpi=300, bbox_inches="tight")
-plt.savefig(os.path.join(base_dir, "plot", "fig6_1_token_char_split.pdf"), bbox_inches="tight")
-print("Saved fig6_1_token_char_split.png successfully.")
+plt.savefig(os.path.join(base_dir, "figures", "fig5-2_token_char_split.png"), dpi=300, bbox_inches="tight")
+plt.savefig(os.path.join(base_dir, "plot", "fig5-2_token_char_split.pdf"), bbox_inches="tight")
+print("Saved fig5-2_token_char_split.png successfully.")

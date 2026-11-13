@@ -35,11 +35,11 @@ s = [52.9, 60.9, 65.0, 63.5, 62.7]
 fig, ax = plt.subplots(figsize=(8.8, 5.2), dpi=300)
 
 ax.plot(lambdas, da, marker="o", markersize=7, color="#1f77b4",
-        linewidth=2.2, label="领域综合得分 DA")
+        linewidth=2.2, label="PowerQA 得分")
 ax.plot(lambdas, gs, marker="s", markersize=7, color="#d62728",
         linewidth=2.2, linestyle="--", label="通用得分 GS")
 ax.plot(lambdas, s, marker="^", markersize=7.5, color="#2ca02c",
-        linewidth=2.3, label="综合得分 $S(\\lambda)$")
+        linewidth=2.3, label="均衡得分 $S(\\lambda)$")
 
 for x, y in zip(lambdas, s):
     ax.annotate(f"{y:.1f}", (x, y), textcoords="offset points", xytext=(0, -15),
@@ -58,6 +58,6 @@ ax.legend(loc="lower right", fontsize=10, framealpha=0.95)
 
 plt.tight_layout()
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-plt.savefig(os.path.join(base_dir, "figures", "fig3-4_data_ratio.png"), dpi=300, bbox_inches="tight")
-plt.savefig(os.path.join(base_dir, "plot", "fig3-4_data_ratio.png"), dpi=300, bbox_inches="tight")
-print("Saved fig3-4_data_ratio.png successfully.")
+plt.savefig(os.path.join(base_dir, "figures", "fig2-4_data_ratio.png"), dpi=300, bbox_inches="tight")
+plt.savefig(os.path.join(base_dir, "plot", "fig2-4_data_ratio.png"), dpi=300, bbox_inches="tight")
+print("Saved fig2-4_data_ratio.png successfully.")

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-图4-2：GRPO 与 GRPO + Clip-Higher 训练 Reward 曲线对比
+图4-4：GRPO 与 GRPO + Clip-Higher 训练 Reward 曲线对比
 对应正文 4.5.3 节与表 tab:rl-comparison：
 标准 GRPO 约 4500 步后停滞于 0.79~0.81 平台（高于 RLOO 的 ~0.77）；GRPO + Clip-Higher 突破平台收敛至 ~0.90
 """
@@ -27,7 +27,7 @@ rcParams["axes.unicode_minus"] = False
 np.random.seed(42)
 total_steps = 8500
 steps = np.arange(total_steps)
-start_reward = 0.12
+start_reward = 0.42
 window_size = 100
 
 
@@ -67,7 +67,7 @@ ax.legend(loc="upper left", fontsize=10.5, framealpha=0.95)
 
 plt.tight_layout()
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-plt.savefig(os.path.join(base_dir, "figures", "fig5-2_grpo_reward.png"), dpi=300, bbox_inches="tight")
+plt.savefig(os.path.join(base_dir, "figures", "fig4-4_grpo_reward.png"), dpi=300, bbox_inches="tight")
 plt.savefig(os.path.join(base_dir, "plot", "grpo_dapo_0_1_range.png"), dpi=300, bbox_inches="tight")
 print("final MA: GRPO %.3f, Clip-Higher %.3f" % (grpo_ma[-1], dapo_ma[-1]))
-print("Saved fig5-2_grpo_reward.png successfully.")
+print("Saved fig4-4_grpo_reward.png successfully.")

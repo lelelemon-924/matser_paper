@@ -1,0 +1,101 @@
+\documentclass[tikz,border=3pt]{standalone}
+\usepackage[fontset=fandol]{ctex}
+\usetikzlibrary{arrows.meta,calc}
+
+% 与全文配图一致的低饱和学术色
+\definecolor{c1}{RGB}{72,108,142}
+\definecolor{c2}{RGB}{168,96,86}
+\definecolor{c3}{RGB}{86,132,108}
+\definecolor{c4}{RGB}{112,94,136}
+\definecolor{ink}{RGB}{52,56,62}
+\definecolor{quiet}{RGB}{108,113,120}
+
+% 卡片宽 3.22cm，间距 0.64cm，四卡总宽约 14.8cm，贴近版心
+\def\CardW{3.22}
+\def\CardH{2.16}
+\def\CardGap{0.64}
+\def\HeadH{0.62}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily,
+    stagearr/.style={
+        -{Latex[length=2.15mm,width=1.7mm]},
+        line width=1.05pt,
+        draw=black!42,
+        shorten >=1.5pt,
+        shorten <=1.5pt
+    },
+    stem/.style={line width=0.7pt, draw=#1!55}
+]
+
+% #1 序号  #2 颜色  #3 阶段名  #4 缩写
+% #5 目标    #6 方法
+% #7 问题上  #8 问题下  #9 产出
+\newcommand{\Roadstage}[9]{%
+    \pgfmathsetmacro{\xpos}{(#1)*(\CardW+\CardGap)}%
+    \begin{scope}[shift={(\xpos,0)}]
+        \node[
+            minimum width=\CardW cm,
+            minimum height=\CardH cm,
+            rounded corners=3pt,
+            fill=#2!7,
+            draw=#2,
+            line width=0.75pt,
+            inner sep=0pt,
+            outer sep=0pt
+        ] (card#1) at (0,0) {};
+        \begin{scope}
+            \clip[rounded corners=3pt] (card#1.north west) rectangle (card#1.south east);
+            \fill[#2] (card#1.north west) rectangle ([yshift=-\HeadH cm]card#1.north east);
+        \end{scope}
+        \node[anchor=west, text=white, font=\bfseries\small, inner sep=0pt]
+            at ([xshift=0.20cm,yshift=-0.31cm]card#1.north west) {#3};
+        \node[anchor=east, text=white, font=\bfseries\small, inner sep=0pt]
+            at ([xshift=-0.20cm,yshift=-0.31cm]card#1.north east) {#4};
+        \node[anchor=center, text=ink, font=\bfseries\normalsize, inner sep=0pt]
+            at ([yshift=-0.12cm]card#1.center) {#5};
+        \node[anchor=center, text=quiet, font=\small, inner sep=0pt]
+            at ([yshift=-0.62cm]card#1.center) {#6};
+        \draw[stem=#2] ([yshift=0.06cm]card#1.north) -- ([yshift=0.32cm]card#1.north);
+        \node[
+            anchor=south,
+            align=center,
+            text=#2!72!black,
+            font=\small,
+            text width=3.15cm,
+            inner sep=0pt
+        ] (q#1) at ([yshift=0.42cm]card#1.north) {#7\\[2pt]#8};
+        \draw[stem=#2] ([yshift=-0.06cm]card#1.south) -- ([yshift=-0.32cm]card#1.south);
+        \node[
+            anchor=north,
+            text=#2!75!black,
+            font=\small\bfseries,
+            inner sep=0pt
+        ] (o#1) at ([yshift=-0.42cm]card#1.south) {#9};
+    \end{scope}%
+}
+
+\Roadstage{0}{c1}{阶段一}{CPT}%
+    {领域知识注入}{持续预训练}%
+    {如何注入领域知识}{并保持通用能力}%
+    {领域基座模型}
+\Roadstage{1}{c2}{阶段二}{SFT}%
+    {任务能力构建}{指令监督微调}%
+    {如何构建任务能力}{并提升推理泛化}%
+    {指令微调模型}
+\Roadstage{2}{c3}{阶段三}{RLAIF}%
+    {场景风格控制}{条件化风格对齐}%
+    {如何调节风格强度}{并实现细粒度控制}%
+    {风格可控模型}
+\Roadstage{3}{c4}{阶段四}{DPO}%
+    {安全合规对齐}{深层偏好优化}%
+    {如何增强安全恢复}{并抑制过度拒答}%
+    {安全合规模型}
+
+\draw[stagearr] ([yshift=-0.12cm]card0.east) -- ([yshift=-0.12cm]card1.west);
+\draw[stagearr] ([yshift=-0.12cm]card1.east) -- ([yshift=-0.12cm]card2.west);
+\draw[stagearr] ([yshift=-0.12cm]card2.east) -- ([yshift=-0.12cm]card3.west);
+
+\end{tikzpicture}
+\end{document}

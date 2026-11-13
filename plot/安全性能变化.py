@@ -107,6 +107,6 @@ for ax, key in zip(axes.flat, ["URR", "ASR", "SRR", "ORR"]):
 
 plt.tight_layout(pad=1.4, h_pad=2.0, w_pad=1.8)
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-plt.savefig(os.path.join(base_dir, "figures", "fig6-3_dpo_training_curves.png"), dpi=300, bbox_inches="tight")
-plt.savefig(os.path.join(base_dir, "plot", "fig6_3_dpo_training_curves.pdf"), bbox_inches="tight")
-print("Saved fig6-3_dpo_training_curves.png successfully.")
+plt.savefig(os.path.join(base_dir, "figures", "fig5-4_dpo_training_curves.png"), dpi=300, bbox_inches="tight")
+plt.savefig(os.path.join(base_dir, "plot", "fig5-4_dpo_training_curves.pdf"), bbox_inches="tight")
+print("Saved fig5-4_dpo_training_curves.png successfully.")

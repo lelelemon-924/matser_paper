@@ -51,7 +51,7 @@ ax1.text(0.985, 0.55, "0.81→1.0\n" + r"$\Delta\sqrt{p}=0.10$" + "\n" + r"$\Del
 
 ax1.set_xlim(0, 1.0)
 ax1.set_ylim(0, 1.05)
-ax1.set_xlabel(r"目标类别概率 $p = P_k(c_k \mid x, o)$")
+ax1.set_xlabel(r"目标类别概率 $p = P_j(c_j \mid x, o)$")
 ax1.set_ylabel(r"单类目奖励 $r$")
 ax1.set_title("(a) 奖励映射", fontsize=11)
 ax1.legend(loc="upper left", frameon=False, fontsize=9)
@@ -78,6 +78,6 @@ ax2.grid(alpha=0.25)
 
 fig.tight_layout()
 out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "figures")
-fig.savefig(os.path.join(out_dir, "fig4_sqrt_reward.pdf"), bbox_inches="tight")
-fig.savefig(os.path.join(out_dir, "fig4_sqrt_reward.png"), dpi=200, bbox_inches="tight")
+fig.savefig(os.path.join(out_dir, "fig4-2_sqrt_reward.pdf"), bbox_inches="tight")
+fig.savefig(os.path.join(out_dir, "fig4-2_sqrt_reward.png"), dpi=200, bbox_inches="tight")
 print("saved")
