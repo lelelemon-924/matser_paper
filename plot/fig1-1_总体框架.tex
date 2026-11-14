@@ -1,104 +1,87 @@
-\documentclass[11pt, tikz, border=12pt]{standalone}
+\documentclass[tikz, border=6pt]{standalone}
 \usepackage[fontset=fandol]{ctex}
-\usetikzlibrary{positioning, shadows, arrows.meta, backgrounds, fit, calc}
-
-\definecolor{tcyan}{RGB}{72, 122, 138}
-\definecolor{tyellow}{RGB}{178, 132, 76}
-\definecolor{tgreen}{RGB}{88, 138, 118}
-\definecolor{tpink}{RGB}{156, 96, 116}
+\usetikzlibrary{positioning, arrows.meta, calc}
 
 \begin{document}
 \begin{tikzpicture}[
-    font=\sffamily,
-    box/.style={
-        draw=#1,
-        fill=#1!6,
-        thick,
-        rounded corners=3pt,
-        text width=4.3cm,
-        minimum height=1.55cm,
-        align=center,
-        inner sep=6pt,
-        font=\footnotesize
-    },
-    header/.style={
-        fill=#1,
-        text=white,
-        font=\bfseries\small,
-        minimum width=4.55cm,
-        inner sep=5pt,
-        rounded corners=2pt,
-        align=center
-    },
-    labelband/.style={
-        fill=#1!10,
-        draw=#1!85,
-        dashed,
-        thick,
-        rounded corners=3pt,
-        align=center,
-        font=\footnotesize\bfseries,
-        inner sep=6pt,
-        minimum height=1.05cm
-    },
-    arrow/.style={-{Latex[scale=1.0]}, thick, draw=black!55},
-    flowarrow/.style={-{Latex[scale=1.15]}, line width=1.3pt, draw=black!45}
+    font=\zihao{-5},
+    base/.style={draw=black, line width=0.6pt, align=center, inner sep=3pt, minimum height=1.15cm},
+    stage/.style={base, minimum width=2.9cm},
+    data/.style={base, minimum width=3.2cm},
+    proc/.style={base, minimum width=2.8cm},
+    model/.style={base, fill=black!10, minimum width=2.2cm},
+    head/.style={align=center, inner sep=2pt},
+    arr/.style={-{Stealth[length=2.2mm, width=1.6mm]}, line width=0.6pt},
+    link/.style={line width=0.6pt},
 ]
 
-    % ==================== 1. 第一列：CPT ====================
-    \node[header=tcyan] (cpt-head) at (0, 0) {阶段一：CPT 知识注入};
-    \node[box=tcyan, below=0.35cm of cpt-head] (cpt-in) {\textbf{输入层}\\通用基座（Qwen2.5-7B）\\七类电力语料 + 通用语料};
-    \node[box=tcyan, minimum height=2.35cm, below=0.45cm of cpt-in] (cpt-proc) {\textbf{核心处理}\\PPL 双阈值筛选（$P_{10}$--$P_{80}$）\\1:1 混合因果语言建模};
-    \node[box=tcyan, below=0.45cm of cpt-proc] (cpt-out) {\textbf{输出层}\\CPT 电力基础模型\\（具备领域事实先验）};
+% 列中心
+\def\cA{0}
+\def\cB{3.6}
+\def\cC{7.15}
+\def\cD{10.5}
+\def\cE{13.55}
+% 行中心
+\def\rA{0}
+\def\rB{-1.85}
+\def\rC{-3.7}
+\def\rD{-5.55}
+\def\rE{-7.45}
 
-    % ==================== 2. 第二列：SFT ====================
-    \node[header=tyellow, right=1.15cm of cpt-head] (sft-head) {阶段二：SFT 任务微调};
-    \node[box=tyellow, below=0.35cm of sft-head] (sft-in) {\textbf{输入层}\\CPT 输出基座模型\\约 6.8 万条电力指令数据};
-    \node[box=tyellow, minimum height=2.35cm, below=0.45cm of sft-in] (sft-proc) {\textbf{核心处理}\\六模块场景原生合成管线\\两阶段微调 + DFT 奖励校正};
-    \node[box=tyellow, below=0.45cm of sft-proc] (sft-out) {\textbf{输出层}\\SFT 多任务模型\\（保留七类原生风格）};
+% ---------------- 表头 ----------------
+\node[head] at (\cA, 1.1) {研究内容};
+\node[head] at (\cB, 1.1) {数据};
+\node[head] at ($(\cC, 1.1)!0.5!(\cD, 1.1)$) {关键方法};
+\node[head] at (\cE, 1.1) {阶段产出};
+\draw[line width=0.4pt] (-1.45, 0.8) -- (14.65, 0.8);
 
-    % ==================== 3. 第三列：RLAIF ====================
-    \node[header=tgreen, right=1.15cm of sft-head] (rlhf-head) {阶段三：RLAIF 风格对齐};
-    \node[box=tgreen, below=0.35cm of rlhf-head] (rlhf-in) {\textbf{输入层}\\SFT 输出基座模型\\约 1.38 万条风格标注样本};
-    \node[box=tgreen, minimum height=2.35cm, below=0.45cm of rlhf-in] (rlhf-proc) {\textbf{核心处理}\\风格条件化 Prefix\\StyleRM-7B 风格奖励\\GRPO + Clip-Higher};
-    \node[box=tgreen, below=0.45cm of rlhf-proc] (rlhf-out) {\textbf{输出层}\\RLAIF 风格可控模型\\（按用户群体切换风格组合）};
+% ---------------- 第 2 章：CPT ----------------
+\node[stage] (s1) at (\cA, \rA) {第 2 章\enspace 持续预训练\\（领域知识注入）};
+\node[data]  (d1) at (\cB, \rA) {Qwen2.5-7B 基座\\电力语料 + 通用语料};
+\node[proc]  (p1a) at (\cC, \rA) {困惑度\\双阈值筛选};
+\node[proc]  (p1b) at (\cD, \rA) {1:1 领域-通用\\混合训练};
+\node[model] (m1) at (\cE, \rA) {CPT 模型};
 
-    % ==================== 4. 第四列：DPO ====================
-    \node[header=tpink, right=1.15cm of rlhf-head] (dpo-head) {阶段四：DPO 安全对齐};
-    \node[box=tpink, below=0.35cm of dpo-head] (dpo-in) {\textbf{输入层}\\RLAIF 输出基座模型\\两类互补安全偏好数据};
-    \node[box=tpink, minimum height=2.35cm, below=0.45cm of dpo-in] (dpo-proc) {\textbf{核心处理}\\Recovery（含 $k=0$）/ Counter\\HS-Weighting 困难状态加权};
-    \node[box=tpink, below=0.45cm of dpo-proc] (dpo-out) {\textbf{输出层}\\最终部署模型\\（知识+任务+风格+安全）};
+% ---------------- 第 3 章：SFT ----------------
+\node[stage] (s2) at (\cA, \rB) {第 3 章\enspace 监督微调\\（任务能力培养）};
+\node[data]  (d2) at (\cB, \rB) {专家种子、知识图谱\\七类业务场景};
+\node[proc]  (p2a) at (\cC, \rB) {场景原生\\指令数据合成};
+\node[proc]  (p2b) at (\cD, \rB) {两阶段微调\\+ DFT};
+\node[model] (m2) at (\cE, \rB) {SFT 模型};
 
-    % ==================== 5. 顶部标签数据流 ====================
-    \coordinate (topY) at ([yshift=1.45cm]cpt-head.north);
-    \path (cpt-head.west) -- (sft-head.east) coordinate[midway] (mid12);
-    \node[labelband=tcyan, text width=9.8cm] (label7) at (mid12 |- topY) {七类电力数据标签贯穿（保留领域知识来源与原生业务场景）};
-    \node[labelband=tgreen, text width=4.3cm] (label3) at (rlhf-head |- topY) {三类目标用户群体\\（按提问者角色设定风格）};
-    \node[labelband=tpink, text width=4.3cm] (labelsafe) at (dpo-head |- topY) {四类安全风险标签\\（深层安全合规边界）};
+% ---------------- 第 4 章：RLAIF ----------------
+\node[stage] (s3) at (\cA, \rC) {第 4 章\enspace 风格对齐\\（按用户角色控制风格）};
+\node[data]  (d3) at (\cB, \rC) {风格标注数据\\三类用户群体};
+\node[proc]  (p3a) at (\cC, \rC) {风格条件化 Prefix\\StyleRM-7B 奖励};
+\node[proc]  (p3b) at (\cD, \rC) {GRPO\\+ Clip-Higher};
+\node[model] (m3) at (\cE, \rC) {RLAIF 模型};
 
-    \draw[arrow, dashed, draw=tcyan!85!black] (label7.south -| cpt-head.north) -- (cpt-head.north);
-    \draw[arrow, dashed, draw=tcyan!85!black] (label7.south -| sft-head.north) -- (sft-head.north);
-    \draw[arrow, dashed, draw=tgreen!85!black] (label3.south) -- (rlhf-head.north);
-    \draw[arrow, dashed, draw=tpink!85!black] (labelsafe.south) -- (dpo-head.north);
+% ---------------- 第 5 章：DPO ----------------
+\node[stage] (s4) at (\cA, \rD) {第 5 章\enspace 安全对齐\\（深层安全恢复）};
+\node[data]  (d4) at (\cB, \rD) {Recovery / Counter\\偏好数据（四类风险）};
+\node[proc]  (p4a) at (\cC, \rD) {同状态\\偏好对构造};
+\node[proc]  (p4b) at (\cD, \rD) {HS-Weighting\\两阶段 DPO};
+\node[model] (m4) at (\cE, \rD) {最终模型};
 
-    % ==================== 6. 纵向与横向连接线 ====================
-    \foreach \col in {cpt, sft, rlhf, dpo} {
-        \draw[arrow] (\col-head) -- (\col-in);
-        \draw[arrow] (\col-in) -- (\col-proc);
-        \draw[arrow] (\col-proc) -- (\col-out);
-    }
+% ---------------- 实验验证 ----------------
+\node[stage] (s5) at (\cA, \rE) {实验验证};
+\node[base, minimum width=12.65cm] (ev) at ($(\cB, \rE)!0.5!(\cE, \rE) + (-0.125, 0)$)
+    {领域任务：PowerQA、FaultDiag、RegulationQA、CrossDomainQA\\
+     风格控制：RoleStyle-Eval；安全合规：URR、ASR、SRR、ORR；跨阶段能力保持};
 
-    \draw[flowarrow] (cpt-proc.east) -- (sft-proc.west);
-    \draw[flowarrow] (sft-proc.east) -- (rlhf-proc.west);
-    \draw[flowarrow] (rlhf-proc.east) -- (dpo-proc.west);
+% ---------------- 连线 ----------------
+\foreach \i in {1,2,3,4} {
+    \draw[link] (s\i.east) -- (d\i.west);
+    \draw[arr] (d\i.east) -- (p\i a.west);
+    \draw[arr] (p\i a.east) -- (p\i b.west);
+    \draw[arr] (p\i b.east) -- (m\i.west);
+}
+\draw[link] (s5.east) -- (ev.west);
 
-    \draw[arrow, dashed, draw=tcyan!90!black] (cpt-out.east) -- node[above, font=\scriptsize] {初始化} (sft-out.west);
-    \draw[arrow, dashed, draw=tyellow!90!black] (sft-out.east) -- node[above, font=\scriptsize] {初始化} (rlhf-out.west);
-    \draw[arrow, dashed, draw=tgreen!90!black] (rlhf-out.east) -- node[above, font=\scriptsize] {初始化} (dpo-out.west);
-
-    \begin{scope}[on background layer]
-        \node[fit=(label7)(labelsafe)(cpt-head)(dpo-out), draw=black!12, fill=gray!3, rounded corners=6pt, inner sep=12pt] {};
-    \end{scope}
+\draw[arr] (m1.south) -- node[right, font=\zihao{6}] {初始化} (m2.north);
+\draw[arr] (m2.south) -- node[right, font=\zihao{6}] {初始化} (m3.north);
+\draw[arr] (m3.south) -- node[right, font=\zihao{6}] {初始化} (m4.north);
+\draw[arr] (m4.south) -- (m4.south |- ev.north);
 
 \end{tikzpicture}
 \end{document}

@@ -1,0 +1,143 @@
+\documentclass[11pt, tikz, border=12pt]{standalone}
+\usepackage[fontset=fandol]{ctex}
+\usetikzlibrary{positioning, shadows, arrows.meta, backgrounds, calc, fit}
+
+\definecolor{cBase}{RGB}{120, 138, 148}
+\definecolor{cEvo}{RGB}{136, 84, 162}
+\definecolor{cOpt}{RGB}{204, 112, 34}
+\definecolor{cHum}{RGB}{52, 126, 186}
+\definecolor{cOut}{RGB}{46, 142, 84}
+
+\newcommand{\cardcontent}[5]{%
+    \begin{minipage}[c]{1.05cm}
+        \centering
+        \tikz[baseline=-0.5ex]{
+            \fill[#1, rounded corners=3pt] (-0.42,-0.42) rectangle (0.42,0.42);
+            \begin{scope}[draw=white, thick, line cap=round, line join=round, scale=1.25]
+                #3
+            \end{scope}
+        }
+    \end{minipage}%
+    \hspace{1.8mm}%
+    \begin{minipage}[c]{#2}
+        \vspace{2pt}
+        \textbf{\fontsize{9.8pt}{12pt}\selectfont\textcolor{black!88}{#4}}\\[3pt]
+        \parbox{#2}{\fontsize{8.2pt}{11.5pt}\selectfont\color{black!68}#5}
+        \vspace{2pt}
+    \end{minipage}%
+}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily,
+    card/.style={draw=black!18, fill=white, thick, rounded corners=5pt, inner sep=8pt},
+    arrow/.style={-{Latex[scale=1.12]}, thick, draw=black!50},
+    optarrow/.style={-{Latex[scale=1.08]}, thick, draw=cOpt!90!black},
+    humarrow/.style={-{Latex[scale=1.08]}, thick, draw=cHum!90!black},
+    edgelabel/.style={font=\scriptsize\bfseries, fill=white, inner sep=2.5pt, rounded corners=2pt}
+]
+
+    % ---- 顶部：基础输入 ----
+    \node[card] (input) at (0, 0) {
+        \cardcontent{cBase}{6.2cm}{
+            \draw (-0.12,-0.15) rectangle (0.12,0.15);
+            \draw (-0.05, 0.05) -- (0.05, 0.05);
+            \draw (-0.05,-0.05) -- (0.05,-0.05);
+        }{基础指令--回答对 $(x, y)$}{来自模块四，约束条件少、推理链条短。}
+    };
+
+    % ---- 中央三步演化 ----
+    \node[card] (step1) at (0, -3.5) {
+        \cardcontent{cEvo}{6.2cm}{
+            \draw (0,-0.05) circle(0.06);
+            \draw[->] (0.05,-0.01) -- (0.15, 0.12);
+            \draw[->] (0.06,-0.05) -- (0.18,-0.05);
+            \draw[->] (0.05,-0.09) -- (0.15,-0.22);
+        }{第一步：操作选择与策略生成}{分析认知能力维度、当前复杂度与数据类型，\\从操作集合 $\mathcal{O}$ 中选择操作并确定操作强度。}
+    };
+
+    \node[card] (step2) at (0, -6.75) {
+        \cardcontent{cEvo}{6.2cm}{
+            \draw[->] (-0.12,0.05) arc (180:20:0.12);
+            \draw[<-] (-0.08,-0.05) arc (180:340:0.12);
+        }{第二步：操作执行与答案同步重写}{依次执行所选操作得到 $x'$，\\再以 $x'$ 为输入重新生成完整回答 $y'$。}
+    };
+
+    \node[card] (step3) at (0, -10.0) {
+        \cardcontent{cEvo}{6.2cm}{
+            \draw (0,-0.18) -- (0.15,0) -- (0.15,0.18) -- (-0.15,0.18) -- (-0.15,0) -- cycle;
+            \draw (-0.05,-0.02) -- (-0.01,-0.06) -- (0.08,0.03);
+        }{第三步：三项自检与过滤}{（1）复杂度是否提升；（2）约束组合是否可解；\\（3）回答是否完整覆盖全部约束。}
+    };
+
+    % ---- 底部：成功输出 ----
+    \node[card] (output) at (0, -13.5) {
+        \cardcontent{cOut}{6.2cm}{
+            \draw (-0.15,0.08) arc (180:360:0.15 and 0.05);
+            \draw (-0.15,0.08) arc (180:0:0.15 and 0.05);
+            \draw (-0.15,-0.04) arc (180:360:0.15 and 0.05);
+            \draw (-0.15,-0.16) arc (180:360:0.15 and 0.05);
+            \draw (-0.15,0.08) -- (-0.15,-0.16);
+            \draw (0.15,0.08) -- (0.15,-0.16);
+        }{复杂指令变体 $(x', y')$}{进入模块六自动化质量筛选。}
+    };
+
+    % ---- 右侧反馈环：Optimizer LLM ----
+    \node[card] (optimizer) at (7.5, -6.75) {
+        \cardcontent{cOpt}{3.3cm}{
+            \draw (-0.1,-0.1) -- (0.05,0.05);
+            \draw (0.05,0.05) arc (225:45:0.08);
+            \fill (0.16, 0.16) circle(0.03);
+        }{Optimizer LLM}{由演化 LLM 自身担任，\\统计每批失败模式，\\迭代修订演化提示词。}
+    };
+
+    % ---- 左侧反馈环：人工轻量介入 ----
+    \node[card] (human) at (-7.5, -6.75) {
+        \cardcontent{cHum}{3.3cm}{
+            \fill (0,0.1) circle (0.07);
+            \draw (-0.18,-0.15) .. controls (-0.18,-0.02) and (0.18,-0.02) .. (0.18,-0.15);
+        }{人工轻量级抽检}{启动期审阅首批 100 条，\\后续每批随机抽检 5\%。}
+    };
+
+    % ---- Evolution LLM 虚线包络框（自动适配 step1..step3，绝不压框） ----
+    \begin{scope}[on background layer]
+        \coordinate (evoTop) at ([yshift=0.52cm]step1.north);
+        \coordinate (evoBot) at ([yshift=-0.18cm]step3.south);
+        \node[fit=(step1)(step2)(step3)(evoTop)(evoBot), draw=cEvo!45, fill=cEvo!4, dashed, thick, rounded corners=6pt, inner xsep=8pt, inner ysep=4pt] (evobox) {};
+        \node[font=\footnotesize\bfseries, text=cEvo!85!black, anchor=north west] at ([xshift=8pt, yshift=-4pt]evobox.north west) {演化 LLM};
+    \end{scope}
+
+    % ---- 中央纵向主干箭头 ----
+    \draw[arrow] (input.south) -- (step1.north);
+    \draw[arrow] (step1.south) -- (step2.north);
+    \draw[arrow] (step2.south) -- (step3.north);
+    \draw[arrow] (step3.south) -- node[pos=0.62, right=3pt, font=\scriptsize\bfseries, text=cOut!90!black] {通过自检} (output.north);
+
+    % ---- 右侧闭环反馈线（标签置于虚线框外侧走廊中央，避免虚线切字） ----
+    \coordinate (optMidX) at ($(evobox.east)!0.5!(optimizer.west)$);
+    \draw[optarrow, rounded corners=5pt]
+        (step3.east) -- (optimizer.center |- step3.east)
+        node[pos=0.58, edgelabel, text=cOpt!90!black] {未通过自检样本}
+        -- (optimizer.south);
+
+    \draw[optarrow, rounded corners=5pt]
+        (output.east) -- ([xshift=1.1cm]optimizer.south |- output.east)
+        node[pos=0.5, edgelabel, text=cOpt!90!black] {模块六剔除样本}
+        -- ([xshift=1.1cm]optimizer.south);
+
+    \draw[optarrow, rounded corners=5pt]
+        (optimizer.north) -- (optimizer.center |- step1.east)
+        -- node[pos=0.42, edgelabel, text=cOpt!90!black] {更新提示词约束} (step1.east);
+
+    % ---- 左侧人工监控线 ----
+    \draw[humarrow, rounded corners=5pt]
+        (output.west) -- (human.center |- output.west)
+        node[pos=0.55, edgelabel, text=cHum!90!black] {5\% 随机抽检}
+        -- (human.south);
+
+    \draw[humarrow, rounded corners=5pt]
+        (human.north) -- (human.center |- step1.west)
+        -- node[pos=0.42, edgelabel, text=cHum!90!black] {宏观演化方向校准} (step1.west);
+
+\end{tikzpicture}
+\end{document}

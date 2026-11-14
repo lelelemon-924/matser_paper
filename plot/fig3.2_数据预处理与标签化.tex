@@ -1,141 +1,63 @@
-\documentclass[11pt, tikz, border=12pt]{standalone}
+\documentclass[tikz, border=6pt]{standalone}
 \usepackage[fontset=fandol]{ctex}
-\usetikzlibrary{positioning, shadows, arrows.meta, backgrounds, fit, calc}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds}
 
-\definecolor{tcyan}{RGB}{72, 122, 138}
-\definecolor{tyellow}{RGB}{178, 132, 76}
-\definecolor{tgreen}{RGB}{88, 138, 118}
-\definecolor{tgray}{RGB}{246, 248, 250}
-\definecolor{tdark}{RGB}{65, 70, 75}
+\definecolor{cMain}{RGB}{62, 96, 138}
+\definecolor{cWarm}{RGB}{176, 118, 62}
+\definecolor{cGray}{RGB}{120, 120, 120}
 
-\definecolor{s1}{RGB}{72, 114, 154}
-\definecolor{s2}{RGB}{68, 132, 148}
-\definecolor{s3}{RGB}{82, 142, 132}
-\definecolor{s4}{RGB}{112, 142, 108}
-\definecolor{s5}{RGB}{156, 136, 88}
-\definecolor{s6}{RGB}{166, 106, 98}
-
-\newcommand{\hstepcontent}[4]{%
-    \begin{minipage}[t][3.6cm][t]{2.25cm}
-        \centering
-        \vspace{4pt}
-        \tikz[baseline=-0.5ex, scale=1.15]{
-            \fill[#1!14, rounded corners=3pt] (-0.34,-0.34) rectangle (0.34,0.34);
-            \begin{scope}[draw=#1!90!black, thick, line join=round, line cap=round]
-                #2
-            \end{scope}
-        }\\[6pt]
-        \textbf{\small #3}\\[5pt]
-        \parbox{2.2cm}{\centering\fontsize{7.5pt}{10.5pt}\selectfont\color{tdark}#4}
-    \end{minipage}%
-}
-
-\newcommand{\hbranchcontent}[4]{%
-    \begin{minipage}[c][1.5cm][c]{4.6cm}
-        \centering
-        \textcolor{#1!85!black}{\textbf{\small #3}}\\[5pt]
-        \parbox{4.5cm}{\centering\fontsize{7.5pt}{10.5pt}\selectfont\color{tdark}#4}
-    \end{minipage}%
+% #1 节点名  #2 颜色  #3 顶部中心坐标  #4 宽度  #5 标题  #6 说明
+\newcommand{\card}[6]{%
+    \node[draw=#2!80!black, fill=#2!14, line width=0.6pt, minimum width=#4,
+          minimum height=0.62cm, inner sep=2pt, font=\heiti\zihao{-5}, anchor=north] (#1-t) at (#3) {#5};
+    \node[draw=#2!80!black, fill=white, line width=0.6pt, minimum width=#4,
+          minimum height=1.55cm, inner sep=3pt, align=center, anchor=north,
+          font=\zihao{-5}] (#1-b) at (#1-t.south) {#6};
+    \node[fit=(#1-t)(#1-b), inner sep=0pt] (#1) {};
 }
 
 \begin{document}
 \begin{tikzpicture}[
-    font=\sffamily,
-    rawbox/.style={draw=black!35, dashed, fill=white, thick, rounded corners=4pt, inner sep=6pt},
-    stepbox/.style={draw=#1!85, fill=white, thick, rounded corners=4pt, inner sep=6pt},
-    branchbox/.style={draw=#1!85, fill=white, thick, rounded corners=4pt, inner sep=6pt},
-    arrow/.style={-{Latex[scale=1.1]}, thick, draw=black!45}
+    arr/.style={-{Stealth[length=2.2mm, width=1.6mm]}, line width=0.6pt, draw=black!75},
 ]
 
-    % ==================== 0. 原始数据 ====================
-    \node[rawbox] (raw) {
-        \begin{minipage}[t][3.6cm][t]{1.95cm}
-            \centering
-            \vspace{4pt}
-            \tikz[baseline=-0.5ex, scale=1.15]{
-                \fill[gray!14, rounded corners=3pt] (-0.34,-0.34) rectangle (0.34,0.34);
-                \begin{scope}[draw=gray!85!black, thick]
-                    \draw (-0.15,0.08) arc (180:360:0.15 and 0.05);
-                    \draw (-0.15,0.08) arc (180:0:0.15 and 0.05);
-                    \draw (-0.15,-0.12) arc (180:360:0.15 and 0.05);
-                    \draw (-0.15,0.08) -- (-0.15,-0.12);
-                    \draw (0.15,0.08) -- (0.15,-0.12);
-                \end{scope}
-            }\\[6pt]
-            \textbf{\small 原始数据}\\[5pt]
-            \parbox{1.95cm}{\centering\fontsize{7.5pt}{10.5pt}\selectfont\color{tdark}内部 / 公开\\PDF / Word\\表格 / 工单}
-        \end{minipage}
-    };
+\def\wS{2.9cm}
+\def\wE{3.6cm}
+\def\yA{0}
+\def\yB{-3.0}
 
-    % ==================== 1-6. 预处理管线 ====================
-    \node[stepbox=s1, right=0.65cm of raw] (step1) {
-        \hstepcontent{s1}{
-            \draw (-0.14,-0.16) rectangle (0.14,0.16);
-            \draw (-0.07,0.05) -- (0.07,0.05);
-            \draw (-0.07,-0.04) -- (0.07,-0.04);
-        }{1. 文本抽取}{差异化文档解析\\双栏与表格还原\\统一 UTF-8 文本}
-    };
+% ---------------- 原始数据 ----------------
+\card{raw}{cGray}{0, \yA}{\wE}{原始数据}{内部语料 / 公开语料\\PDF / Word\\表格 / 工单}
 
-    \node[stepbox=s2, right=0.38cm of step1] (step2) {
-        \hstepcontent{s2}{
-            \draw (-0.15, 0.10) -- (0.15, 0.10);
-            \draw (-0.15, 0.00) -- (0.08, 0.00);
-            \draw (-0.15,-0.10) -- (0.15,-0.10);
-        }{2. 格式规范}{统一条款层级\\标准化计量单位\\规范专业符号}
-    };
+% ---------------- 预处理步骤 1--6（两行回转） ----------------
+\card{s1}{cMain}{4.25, \yA}{\wS}{1. 文本抽取}{差异化文档解析\\双栏与表格还原\\统一 UTF-8 文本}
+\card{s2}{cMain}{7.85, \yA}{\wS}{2. 格式规范}{统一条款层级\\标准化计量单位\\规范专业符号}
+\card{s3}{cMain}{11.45, \yA}{\wS}{3. 噪声清洗}{剔除页眉与页码\\清理 OCR 乱码\\过滤重复声明}
+\card{s4}{cMain}{11.45, \yB}{\wS}{4. 分段切片}{4096 token 窗口\\自然句边界截断\\相邻逻辑块拼接}
+\card{s5}{cMain}{7.85, \yB}{\wS}{5. 去重筛选}{一级 SimHash\\二级 MinHash\\三级 BGE-M3}
+\card{s6}{cMain}{4.25, \yB}{\wS}{6. 质量评估}{自动指标初筛\\LLM 辅助判断\\人工抽样校验}
 
-    \node[stepbox=s3, right=0.38cm of step2] (step3) {
-        \hstepcontent{s3}{
-            \draw (-0.16,0.14) -- (0.16,0.14) -- (0.05,-0.01) -- (0.05,-0.15) -- (-0.05,-0.15) -- (-0.05,-0.01) -- cycle;
-        }{3. 噪声清洗}{剔除页眉与页码\\清理 OCR 乱码\\过滤重复声明}
-    };
+% ---------------- 标签化 ----------------
+\card{lab}{cWarm}{0, \yB}{\wE}{7. 七类数据类型标签化}{用于 CPT 知识溯源、\\SFT 场景原生指令生成\\与评测文档分层抽取}
 
-    \node[stepbox=s4, right=0.38cm of step3] (step4) {
-        \hstepcontent{s4}{
-            \draw (-0.16,-0.12) rectangle (-0.03,0.12);
-            \draw (0.03,-0.12) rectangle (0.16,0.12);
-            \draw[dashed, thin] (0,-0.17) -- (0,0.17);
-        }{4. 分段切片}{4096 Token 窗口\\自然句边界截断\\相邻逻辑块拼接}
-    };
+% ---------------- 连线 ----------------
+\draw[arr] (raw) -- (s1);
+\draw[arr] (s1) -- (s2);
+\draw[arr] (s2) -- (s3);
+\draw[arr] (s3) -- (s4);
+\draw[arr] (s4) -- (s5);
+\draw[arr] (s5) -- (s6);
+\draw[arr] (s6) -- (lab);
 
-    \node[stepbox=s5, right=0.38cm of step4] (step5) {
-        \hstepcontent{s5}{
-            \draw (-0.06, 0.05) circle (0.11);
-            \draw[dashed] (0.06,-0.05) circle (0.11);
-        }{5. 去重筛选}{一级 SimHash\\二级 MinHash\\三级 BGE-M3}
-    };
-
-    \node[stepbox=s6, right=0.38cm of step5] (step6) {
-        \hstepcontent{s6}{
-            \draw (-0.14,-0.14) rectangle (0.14,0.14);
-            \draw (-0.07,-0.01) -- (-0.02,-0.06) -- (0.08,0.05);
-        }{6. 质量评估}{自动指标初筛\\LLM 辅助判断\\人工抽样校验}
-    };
-
-    \draw[arrow] (raw) -- (step1);
-    \draw[arrow] (step1) -- (step2);
-    \draw[arrow] (step2) -- (step3);
-    \draw[arrow] (step3) -- (step4);
-    \draw[arrow] (step4) -- (step5);
-    \draw[arrow] (step5) -- (step6);
-
-    % ==================== 7. 数据类型标签化 ====================
-    \node[branchbox=tyellow, anchor=west] (label1) at ($(step6.east) + (0.83cm, 0)$) {
-        \hbranchcontent{tyellow}{}{七类数据类型标签}{用于 CPT 知识来源溯源、\\SFT 场景原生指令生成\\与评测文档分层抽取}
-    };
-
-    \draw[arrow, draw=tyellow!85!black] (step6.east) -- (label1.west);
-
-    % ==================== 背景框 ====================
-    \begin{scope}[on background layer]
-        \coordinate (A-top) at ($(step1.north) + (0, 0.65cm)$);
-        \coordinate (A-bot) at ($(step1.south) + (0, -0.22cm)$);
-        \node[fit=(step1)(step6)(A-top)(A-bot), draw=tcyan!30, fill=tgray, rounded corners=5pt, inner xsep=8pt] (pipelinebg) {};
-        \node[anchor=north west, font=\footnotesize\bfseries, text=tcyan!85!black] at ([xshift=8pt, yshift=-5pt]pipelinebg.north west) {阶段 A：系统化预处理管线（步骤 1--6）};
-
-        \node[fit=(label1)(label1.west |- A-top)(label1.west |- A-bot), draw=black!15, fill=black!2, rounded corners=5pt, inner xsep=10pt, inner ysep=0pt] (labelbg) {};
-        \node[anchor=north west, font=\footnotesize\bfseries, text=black!65] at ([xshift=8pt, yshift=-5pt]labelbg.north west) {阶段 B：标签化（步骤 7）};
-    \end{scope}
+% ---------------- 阶段背景 ----------------
+\begin{scope}[on background layer]
+    \node[fit=(s1)(s3)(s4)(s6), draw=cMain!45, fill=cMain!4, line width=0.5pt,
+          inner xsep=0.22cm, inner ysep=0.22cm] (bgA) {};
+\end{scope}
+\node[anchor=south west, inner sep=2pt, font=\zihao{-5}, text=cMain!90!black]
+    at (bgA.north west) {阶段 A：系统化预处理（步骤 1--6）};
+\node[anchor=south west, inner sep=2pt, font=\zihao{-5}, text=cWarm!90!black]
+    at ([yshift=0.22cm]lab.north west) {阶段 B：标签化（步骤 7）};
 
 \end{tikzpicture}
 \end{document}
